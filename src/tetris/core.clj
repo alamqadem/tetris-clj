@@ -34,7 +34,6 @@
   {:pieces [{:piece
              {:kind :block, :pos ['(3 2), '(1 1)], :pos-size 2},
              :pos '(3 3)}]
-
    :size 5}
   ;; pos
   ;; make-pos
@@ -52,6 +51,7 @@
   ;; shape-pos-ls
   ((fn [shape] (get shape :pos-ls)) shape)
 
+  ;; testing that drawing a shape works as expected in graphical
   ;; draw-shape
   (def board-with-a-shape
     ((fn [shape board]
@@ -71,33 +71,42 @@
   ;;      ["   " "   " "   " "   " "   "]],
   (graphical/print-board board-with-a-shape)
 
-  (graphical/print-board (piece/->board (piece/make shape/l (pos/make 1 3)) (graphical/make 5)))
+  (def board-with-a-piece (piece/->board (piece/make shape/l (pos/make 1 2)) (graphical/make 5)))
+  board-with-a-piece
+  ;; => {:board
+  ;;     [["   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   "]
+  ;;      ["   " "[ ]" "   " "   " "   "]
+  ;;      ["   " "[ ]" "   " "   " "   "]
+  ;;      ["   " "[ ]" "[ ]" "   " "   "]],
+  ;;     :size 5}
+  (graphical/print-board board-with-a-piece)
 
- ;; trying to reproduce a bug
- ;;   ------------------------------
- ;;                              
- ;;                              
- ;;                              
- ;;                              
- ;;                              
- ;;                              
- ;;                              
- ;;                              
- ;; [ ][ ][ ]                     
- ;; [ ]                           
- ;; ------------------------------
- ;; ------------------------------
- ;;                              
- ;;                              
- ;;                              
- ;;                              
- ;;                              
- ;;                              
- ;;                              
- ;;                              
- ;; [ ][ ][ ]                     
- ;; [0 "[ ]"]
- ;; ------------------------------
+;; trying to reproduce a bug
+  ;;   ------------------------------
+  ;;                              
+  ;;                              
+  ;;                              
+  ;;                              
+  ;;                              
+  ;;                              
+  ;;                              
+  ;;                              
+  ;; [ ][ ][ ]                     
+  ;; [ ]                           
+  ;; ------------------------------
+  ;; ------------------------------
+  ;;                              
+  ;;                              
+  ;;                              
+  ;;                              
+  ;;                              
+  ;;                              
+  ;;                              
+  ;;                              
+  ;; [ ][ ][ ]                     
+  ;; [0 "[ ]"]
+  ;; ------------------------------
   (def board-size 10)
   (def game (game/make 0 [(piece/make shape/l (pos/make 0 8))] board-size))
 
@@ -130,7 +139,7 @@
 
   (def invalid-game
     (game/pieces-set! game
-                           (piece/pos-set! piece new-pos)))
+                      (piece/pos-set! piece new-pos)))
 
   (game/->board invalid-game)
   ;; => {:board
@@ -146,3 +155,5 @@
   ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]],
   ;;     :size 10}
   )
+  
+  

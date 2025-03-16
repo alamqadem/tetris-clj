@@ -6,7 +6,7 @@
 ;; game
 (defn make [time pieces size]
   {:time time,
-   :pieces pieces,
+   :pieces (seq pieces),
    :size size})
 
 (defn game-time [game]
@@ -32,12 +32,12 @@
 
 (defn current-piece [game]
   ;; given a game returns the current piece that is failling
-  (last (pieces game)))
+  (first (pieces game)))
 
 (defn add-piece [game piece]
   ;; adds a piece in such a way that the new piece is the current piece
   (pieces-set! game
-                    (conj (pieces game) piece)))
+               (cons piece (pieces game))))
 
 (defn ->board [game]
   ;; transforms a game into a board
@@ -70,15 +70,14 @@
 
 (defn move-piece [game piece new-pos]
   (let [new-piece (piece/pos-set! piece new-pos)
-        pieces (into [] (filter (fn [p] (not= p piece)) (pieces game)))]
-    (pieces-set! game (conj pieces new-piece)))
-  )
+        pieces (filter (fn [p] (not= p piece)) (pieces game))] 
+    (add-piece (pieces-set! game pieces) new-piece)))
 
 (defn add-random-piece [game]
   ;;adds a new piece of a random shape at the top of the game in a random position
   (let [rand-shape (shape/random-shape)
         rand-shape-width (shape/width rand-shape)
-        rand-pos (pos/rand-pos (- (size game) rand-shape-width))
+        rand-pos (pos/rand-pos (- (size game) (dec rand-shape-width)))
         rand-piece (piece/make rand-shape rand-pos)]
     (add-piece game rand-piece)))
 
@@ -106,7 +105,7 @@
             (move-piece game-updated piece down-by-1)
             (add-random-piece game-updated))))))
 
-  (comment
+(comment
   {:time 0,
    :pieces [nil, nil, nil],
    :size 5}

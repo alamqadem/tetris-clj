@@ -8,41 +8,45 @@
 
 (defn width [shape]
   ;; returns the width of a shape
-  (reduce max (map pos/x (pos-ls shape))))
+  ;; the real implemenation should be (- (max pos/x) (min pos/x))
+  (inc
+   (reduce max
+           (map pos/x (pos-ls shape)))))
 
 (defn height [shape]
   ;; returns the height of a shape
-  (reduce max (map pos/y (pos-ls shape))))
+  (inc
+   (reduce max
+           (map pos/y (pos-ls shape)))))
 
 (def block (make [(pos/make 0 0)]))
 
 (def l (make [(pos/make 0 0)
-                          (pos/make 0 1)
-                          (pos/make 0 2) (pos/make 1 2)]))
+              (pos/make 0 1)
+              (pos/make 0 2) (pos/make 1 2)]))
 
 (def square
   (make [(pos/make 0 0) (pos/make 0 1)
-               (pos/make 1 0) (pos/make 1 1)]))
+         (pos/make 1 0) (pos/make 1 1)]))
 
 (def i
   (make [(pos/make 0 0)
-               (pos/make 0 1)
-               (pos/make 0 2)
-               (pos/make 0 3)]))
+         (pos/make 0 1)
+         (pos/make 0 2)
+         (pos/make 0 3)]))
 
 (def s
-  (make [           (pos/make 1 0) (pos/make 2 0)
-               (pos/make 0 1) (pos/make 1 1)]))
+  (make [               (pos/make 1 0) (pos/make 2 0)
+         (pos/make 0 1) (pos/make 1 1)]))
 
 (def z
   (make [(pos/make 0 0) (pos/make 1 0)
-                          (pos/make 1 1) (pos/make 2 1)]))
+                        (pos/make 1 1) (pos/make 2 1)]))
 
 (def j
-  (make [          (pos/make 1 0)
-                         (pos/make 1 1)
-                         (pos/make 1 2)
-               (pos/make 0 2)]))
+  (make [               (pos/make 1 0)
+                        (pos/make 1 1)
+         (pos/make 0 2) (pos/make 1 2)]))
 
 (def t
   (make [(pos/make 0 0) (pos/make 1 0) (pos/make 2 0)

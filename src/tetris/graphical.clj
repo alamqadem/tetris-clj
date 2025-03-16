@@ -7,9 +7,9 @@
   (into [] (repeat n "   ")))
 
 (defn make-matrix [n]
-      (into []
-   (repeat n
-           (row n))))
+  (into []
+        (repeat n
+                (row n))))
 
 (defn -make [matrix size]
       {:board matrix, :size size})
@@ -29,13 +29,10 @@
 (defn matrix-set! [board board-values]
       (-make board-values (size board)))
 
-(defn board-get [board x y]
-  (let [board-values (matrix board)]
-    (get (get board-values y) x)))
 
 (defn to-str [board]
-      (reduce #(str %1 "\n" %2)
-              (map #(reduce str %1) (matrix board))))
+  (reduce #(str %1 "\n" %2)
+          (map #(reduce str %1) (matrix board))))
 
 (defn print-board [board]
   (let [size (size board)]
@@ -43,14 +40,23 @@
     (println (to-str board))
     (println (reduce #(str %1 %2) (repeat size  "---")))))
 
+(defn pos-in-board? [pos-x pos-y board]
+  (and (< pos-x (size board))
+       (< pos-y (size board))))
+
 (defn add-block [board pos-x pos-y]
-      (let [board-values (matrix board)
-        new-board-values  (assoc board-values pos-y
-                            (assoc (get board-values pos-y) pos-x "[ ]"))]
-           (matrix-set! board new-board-values)))
+  (if (not (pos-in-board? pos-x pos-y board))
+    (throw (ex-info
+            "attempt to write in position outside of the board"
+            {:pos (list pos-x pos-y) :size (size board)})))
+  (let [board-values (matrix board)
+        board-row (get board-values pos-y)
+        updated-board-row (assoc board-row pos-x "[ ]")
+        new-board-values  (assoc board-values pos-y updated-board-row)]
+    (matrix-set! board new-board-values)))
 
 (defn add-rand-block [board]
-      (add-block board (rand-int (size board)) 0))
+  (add-block board (rand-int (size board)) 0))
 
 (defn move-board [board]
       (let [size (size board)
@@ -77,7 +83,7 @@
   ;;     (" " " " " " " " " "))
   (def board (make 5))
   ;; => #'tetris.core/board
-  (assoc (into [ ] board) 0
+  (assoc (into [] board) 0
          (assoc (into [] (repeat 5 " ")) 0 "[ ]"))
   ;; => [["[ ]" " " " " " " " "]
   ;;     (" " " " " " " " " ")
@@ -104,9 +110,9 @@
   ;;     ["   " "   " "   " "   " "   "]
   ;;     ["   " "   " "   " "   " "   "]
   ;;     ["   " "   " "   " "   " "   "]]
-  
+
   ;; how can I print the board? 🤔
-  
+
   (str (get board 0))
 
   (def new-board (add-block board 1 1))
@@ -124,7 +130,7 @@
           (map #(reduce str %1) new-board))
 
   (clojure.string/join "\n"
-          (map #(reduce str %) new-board))
+                       (map #(reduce str %) new-board))
 
   ;; print board
   (print (to-str new-board))
@@ -140,6 +146,13 @@
   ;;     ["   " "   " "   " "   " "   "]
   ;;     ["   " "   " "   " "   " "   "]]
 
+  (def board (make 5))
+  (get (matrix board) 5)
+  ;; => nil
+  (assoc nil 0 "[ ]")
+  ;; nil is considered as the empty map, treat 0 as the key
+  ;; and "[ ]" as the value
+  ;; => {0 "[ ]"}
   ;; move blocks by one
   (concat [(row 5)] (take 4 new-board))
   ;; => (["   " "   " "   " "   " "   "]
@@ -165,7 +178,7 @@
   (def moved-board (move-board board-with-new-block))
   moved-board
   (concat [(row 5)] (take 4 board-with-new-block))
-  
+
   (let [board-with-new-block (add-rand-block new-board)
         moved-board (move-board board-with-new-block)]
     (print-board moved-board))
@@ -183,4 +196,23 @@
   ;;      ["   " "   " "   " "   " "   "]
   ;;      ["   " "   " "   " "   " "   "]],
   ;;     :size 5})
-)
+
+    ;; testing that drawing a shape works as expected in graphical
+  ;; draw-shape
+  (def board-with-a-shape
+    ((fn [shape board]
+       (let [pos-ls (get shape :pos-ls)]
+         (loop [current-board board, current-pos-ls pos-ls]
+           (if (empty? current-pos-ls)
+             current-board
+             (let [current-pos (first current-pos-ls),
+                   new-board (add-block current-board (first current-pos) (last current-pos))]
+               (recur new-board (rest current-pos-ls)))))))
+     {:pos-ls [(list 0 0) (list 0 1) (list 1 0) (list 2 0)]} (make 20)))
+  ;; => {:board
+  ;;     [["[ ]" "[ ]" "[ ]" "   " "   "]
+  ;;      ["[ ]" "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   "]],
+  (print-board board-with-a-shape))

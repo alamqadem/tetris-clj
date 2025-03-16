@@ -20,12 +20,9 @@
 
 ;; shape->board
 (defn ->board [piece init-board]
-     (let [pos-ls (->pos-ls piece)]
-       (loop [board init-board, pos-ls pos-ls]
-         (if (empty? pos-ls)
-           board
-           (let [pos (first pos-ls),
-                 new-board (graphical/add-block board
-                                                (pos/x pos)
-                                                (pos/y pos))]
-             (recur new-board (rest pos-ls)))))))
+  (reduce (fn [board pos]
+            (graphical/add-block board
+                                 (pos/x pos)
+                                 (pos/y pos)))
+          init-board
+          (->pos-ls piece)))
