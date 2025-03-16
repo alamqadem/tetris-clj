@@ -9,7 +9,7 @@
    :pieces pieces,
    :size size})
 
-(defn time [game]
+(defn game-time [game]
   (get game :time))
 
 (defn pieces [game]
@@ -18,17 +18,17 @@
 (defn size [game]
   (get game :size))
 
-(defn time-set! [game time]
+(defn game-time-set! [game time]
   (make
    time
    (pieces game)
    (size game)))
 
 (defn pieces-set! [game pieces]
-  (make (time game) pieces (size game)))
+  (make (game-time game) pieces (size game)))
 
 (defn size-set! [game size]
-  (make (time game) (pieces game) size))
+  (make (game-time game) (pieces game) size))
 
 (defn current-piece [game]
   ;; given a game returns the current piece that is failling
@@ -83,24 +83,28 @@
     (add-piece game rand-piece)))
 
 (defn game-over? [game]
-  (let [piece (current-piece game)
-        pos (piece/pos piece)
-        new-pos (pos/add pos (pos/make 0 1))]
-    (and
-     (= (pos/y pos) 0)
-     (not (move-piece? game piece new-pos)))))
+  (let [piece (current-piece game)]
+    (if (not piece)
+      false
+      (let [pos (piece/pos piece)
+            new-pos (pos/add pos (pos/make 0 1))]
+        (and
+         (= (pos/y pos) 0)
+         (not (move-piece? game piece new-pos)))))))
   
 (defn update-game [game]
-  (let [game-updated (time-set! game (inc (time game)))
-        piece (current-piece game-updated)
-        down-by-1 (pos/add (piece/pos piece) (pos/make 0 1))]
-    ;; increment time
-    ;; move current piece down by 1
-    ;; if the current piece cannot move add a new random piece
-    ;; move pieces down by 1
-    (if (move-piece? game-updated piece down-by-1)
-      (move-piece game-updated piece down-by-1)
-      (add-random-piece game-updated))))
+  (let [game-updated (game-time-set! game (inc (game-time game)))
+        piece (current-piece game-updated)]
+     ;; increment time
+     ;; move current piece down by 1 if present
+     ;; if the current piece cannot move add a new random piece
+     ;; move pieces down by 1
+     (if (not piece)
+       (add-random-piece game-updated)
+       (let [down-by-1 (pos/add (piece/pos piece) (pos/make 0 1))]
+          (if (move-piece? game-updated piece down-by-1)
+            (move-piece game-updated piece down-by-1)
+            (add-random-piece game-updated))))))
 
   (comment
   {:time 0,

@@ -9,7 +9,7 @@
 
 ;; loop
 (defn game-loop [board-size]
-  (let [game (game/make 0 [(piece/make shape/l (pos/make 0 0))] board-size)]
+  (let [game (game/make 0 [] board-size)]
     (loop [game game]
       (let [input (read-line)]
         (if (not= input "q")
@@ -25,9 +25,8 @@
   [& args]
   (let [size (if (empty? args)
                20
-               (get (into [] args) 0))]
-    (game-loop (Integer/parseInt size)))
-  )
+               (Integer/parseInt (first args)))]
+    (game-loop size)))
 
 (comment
   (game-loop 5)
