@@ -6,60 +6,60 @@
 (defn row [n]
   (into [] (repeat n "   ")))
 
-(defn create-board-matrix [n]
-  (into []
+(defn make-matrix [n]
+      (into []
    (repeat n
            (row n))))
 
-(defn _create-board [matrix size]
-  {:board matrix, :size size})
+(defn -make [matrix size]
+      {:board matrix, :size size})
 
-(defn create-board [n]
-  (_create-board (create-board-matrix n) n))
+(defn make [n]
+      (-make (make-matrix n) n))
 
-(defn board-matrix [board]
-  (board :board))
+(defn matrix [board]
+      (board :board))
 
-(defn board-size [board]
-  (get board :size))
+(defn size [board]
+      (get board :size))
 
-(defn board-size-set [board size]
-  (_create-board (board-matrix board) size))
+(defn size-set! [board size]
+      (-make (matrix board) size))
 
-(defn board-matrix-set [board board-values]
-  (_create-board board-values (board-size board)))
+(defn matrix-set! [board board-values]
+      (-make board-values (size board)))
 
 (defn board-get [board x y]
-  (let [board-values (board-matrix board)]
+  (let [board-values (matrix board)]
     (get (get board-values y) x)))
 
-(defn board-to-str [board]
-  (reduce #(str %1 "\n" %2)
-          (map #(reduce str %1) (board-matrix board))))
+(defn to-str [board]
+      (reduce #(str %1 "\n" %2)
+              (map #(reduce str %1) (matrix board))))
 
 (defn print-board [board]
-  (let [size (board-size board)]
+  (let [size (size board)]
     (println (reduce #(str %1 %2) (repeat size   "---")))
-    (println (board-to-str board))
+    (println (to-str board))
     (println (reduce #(str %1 %2) (repeat size  "---")))))
 
 (defn add-block [board pos-x pos-y]
-  (let [board-values (board-matrix board)
+      (let [board-values (matrix board)
         new-board-values  (assoc board-values pos-y
                             (assoc (get board-values pos-y) pos-x "[ ]"))]
-    (board-matrix-set board new-board-values)))
+           (matrix-set! board new-board-values)))
 
 (defn add-rand-block [board]
-  (add-block board (rand-int (board-size board)) 0))
+      (add-block board (rand-int (size board)) 0))
 
 (defn move-board [board]
-  (let [size (board-size board)
-        board-values (board-matrix board)
+      (let [size (size board)
+        board-values (matrix board)
         new-board-values
           (into []
                 (concat [(row size)]
                         (take (- size 1) board-values)))]
-    (board-matrix-set board new-board-values)))
+           (matrix-set! board new-board-values)))
 
 (comment
   (repeat 3 "[ ]")
@@ -69,13 +69,13 @@
   ;;     (" " " " " " " ")
   ;;     (" " " " " " " ")
   ;;     (" " " " " " " "))
-  (create-board 5)
+  (make 5)
   ;; => ((" " " " " " " " " ")
   ;;     (" " " " " " " " " ")
   ;;     (" " " " " " " " " ")
   ;;     (" " " " " " " " " ")
   ;;     (" " " " " " " " " "))
-  (def board (create-board 5))
+  (def board (make 5))
   ;; => #'tetris.core/board
   (assoc (into [ ] board) 0
          (assoc (into [] (repeat 5 " ")) 0 "[ ]"))
@@ -88,7 +88,7 @@
   ;; => #'tetris.core/row
   (row 3)
   ;; => ["   " "   " "   "]
-  (create-board 4)
+  (make 4)
   ;; => [["   " "   " "   " "   "]
   ;;     ["   " "   " "   " "   "]
   ;;     ["   " "   " "   " "   "]
@@ -127,7 +127,7 @@
           (map #(reduce str %) new-board))
 
   ;; print board
-  (print (board-to-str new-board))
+  (print (to-str new-board))
 
   ;; add a new block at a random position
   (do
@@ -170,7 +170,7 @@
         moved-board (move-board board-with-new-block)]
     (print-board moved-board))
 
-  (_create-board (create-board-matrix 3) 3)
+  (-make (make-matrix 3) 3)
   ;; => {:board
   ;;     [["   " "   " "   "] ["   " "   " "   "] ["   " "   " "   "]],
   ;;     :size 3}
