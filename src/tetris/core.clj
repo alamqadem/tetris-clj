@@ -1,0 +1,154 @@
+(ns tetris.core
+  (:gen-class)
+  (:require [tetris.graphical :as graphical]
+            [tetris.position :as pos]
+            [tetris.shape :as shape]
+            [tetris.piece :as piece]
+            [tetris.game :as game]
+            ))
+
+
+
+(defn update-board [board]
+  (graphical/move-board (graphical/add-rand-block board)))
+
+;; loop
+(defn game-loop [board-size]
+  (let [game (game/make-game 0 [(piece/make-piece shape/l-shape (pos/make-pos 0 0))] board-size)]
+    (loop [game game]
+      (let [input (read-line)]
+        (if (not= input "q")
+          (do
+            (graphical/print-board (game/game->board game))
+            (flush)
+            (if (game/game-over? game)
+              (println "game over...")
+              (recur (game/update-game game))))
+          (println "quitting..."))))))
+
+(defn -main
+  [& args]
+  (let [size (if (empty? args)
+               20
+               (get (into [] args) 0))]
+    (game-loop (Integer/parseInt size)))
+  )
+
+(comment
+  (game-loop 5)
+
+  {:pieces [{:piece
+             {:kind :block, :pos ['(3 2), '(1 1)], :pos-size 2},
+             :pos '(3 3)}]
+
+   :size 5}
+  ;; pos
+  ;; make-pos
+  (def pos ((fn [x y] (list x y)) 3 0))
+  ;; pos-x
+  ((fn [pos] (first pos)) pos)
+  ;; pos-y
+  ((fn [pos] (last pos)) pos)
+
+  ;; shape
+  ;; make-shape
+  (def shape
+    ((fn [pos-ls] {:pos-ls pos-ls}) [(list 0 0)]))
+
+  ;; shape-pos-ls
+  ((fn [shape] (get shape :pos-ls)) shape)
+
+  ;; draw-shape
+  (def board-with-a-shape
+    ((fn [shape board]
+       (let [pos-ls (get shape :pos-ls)]
+         (loop [current-board board, current-pos-ls pos-ls]
+           (if (empty? current-pos-ls)
+             current-board
+             (let [current-pos (first current-pos-ls),
+                   new-board (graphical/add-block current-board (first current-pos) (last current-pos))]
+               (recur new-board (rest current-pos-ls)))))))
+     {:pos-ls [(list 0 0) (list 0 1) (list 1 0) (list 2 0)]} (graphical/create-board 20)))
+  ;; => {:board
+  ;;     [["[ ]" "[ ]" "[ ]" "   " "   "]
+  ;;      ["[ ]" "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   "]],
+  (graphical/print-board board-with-a-shape)
+
+  (graphical/print-board (piece/piece->board (piece/make-piece shape/l-shape (pos/make-pos 1 3)) (graphical/create-board 5)))
+
+ ;; trying to reproduce a bug
+ ;;   ------------------------------
+ ;;                              
+ ;;                              
+ ;;                              
+ ;;                              
+ ;;                              
+ ;;                              
+ ;;                              
+ ;;                              
+ ;; [ ][ ][ ]                     
+ ;; [ ]                           
+ ;; ------------------------------
+ ;; ------------------------------
+ ;;                              
+ ;;                              
+ ;;                              
+ ;;                              
+ ;;                              
+ ;;                              
+ ;;                              
+ ;;                              
+ ;; [ ][ ][ ]                     
+ ;; [0 "[ ]"]
+ ;; ------------------------------
+  (def board-size 10)
+  (def game (game/make-game 0 [(piece/make-piece shape/l-shape (pos/make-pos 0 8))] board-size))
+
+  (game/game->board game)
+  ;; => {:board
+  ;;     [["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["[ ]" "[ ]" "[ ]" "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["[ ]" "   " "   " "   " "   " "   " "   " "   " "   " "   "]],
+  ;;     :size 10}
+
+  (def piece (first (game/game-pieces game)))
+  (def new-pos (pos/pos-add (piece/piece-pos piece) (pos/make-pos 0 1)))
+
+  (game/move-piece? game piece new-pos)
+  ;; => true
+  (game/outside-of-boundaries? game piece new-pos)
+  ;; => false
+  (let [pos-ls
+        (piece/piece->pos-ls (piece/piece-pos-set! piece new-pos))
+          ;; => ((0 9) (0 10) (1 9) (2 9))
+        ]
+    (some not (map (fn [p] (game/pos-in-game? game p)) pos-ls)))
+
+  (def invalid-game
+    (game/game-pieces-set! game
+                           (piece/piece-pos-set! piece new-pos)))
+
+  (game/game->board invalid-game)
+  ;; => {:board
+  ;;     [["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]],
+  ;;     :size 10}
+  )
