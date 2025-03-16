@@ -26,7 +26,8 @@
           current-piece (current-piece game)
           new-pos (pos/make 0 3)]
       (is (outside-of-boundaries? game current-piece new-pos))
-      (is (not (outside-of-boundaries? game current-piece (piece/pos current-piece))))))
+      (is (not (outside-of-boundaries? game current-piece (piece/pos current-piece))))
+      (is (outside-of-boundaries? game current-piece (pos/make -1 1)))))
 
 
   (testing "collision detection of pieces"

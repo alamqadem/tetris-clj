@@ -47,8 +47,11 @@
 
 (defn pos-in-game? [game pos]
   ;; returns true if a position is within a game matrix
-  (and (< (pos/x pos) (size game))
-       (< (pos/y pos) (size game))))
+  (and
+   (>= (pos/x pos) 0)
+   (>= (pos/y pos) 0)
+   (< (pos/x pos) (size game))
+   (< (pos/y pos) (size game))))
 
 (defn outside-of-boundaries? [game piece pos]
   ;; returns true if moving piece in the game to pos makes it outside of the game boundaries
@@ -91,19 +94,26 @@
          (= (pos/y pos) 0)
          (not (move-piece? game piece new-pos)))))))
   
-(defn update-game [game]
-  (let [game-updated (game-time-set! game (inc (game-time game)))
-        piece (current-piece game-updated)]
+(defn update-game
+  ([game]
+   (update-game game (pos/make 0 0)))
+  ([game movement]
+   (let [game-updated (game-time-set! game (inc (game-time game)))
+         piece (current-piece game-updated)]
      ;; increment time
      ;; move current piece down by 1 if present
      ;; if the current piece cannot move add a new random piece
      ;; move pieces down by 1
      (if (not piece)
        (add-random-piece game-updated)
-       (let [down-by-1 (pos/add (piece/pos piece) (pos/make 0 1))]
-          (if (move-piece? game-updated piece down-by-1)
-            (move-piece game-updated piece down-by-1)
-            (add-random-piece game-updated))))))
+       (let [down-by-1 (pos/add (piece/pos piece) (pos/make 0 1))
+             down-and-move (pos/add down-by-1 movement)
+             new-pos (if (move-piece? game-updated piece down-and-move)
+                       down-and-move
+                       down-by-1)]
+         (if (move-piece? game-updated piece new-pos)
+           (move-piece game-updated piece new-pos)
+           (add-random-piece game-updated)))))))
 
 (comment
   {:time 0,
@@ -448,4 +458,6 @@
   (pos/pos-ls-intersect? other-pieces-pos-ls piece-pos-ls-after-move)
   ;; => true
 
+  (move-piece? (make 0 [] 5) (piece/make shape/l (pos/make 0 2)) (pos/make -1 1))
+   ;; {:pos (-1 1), :size 10}
   )

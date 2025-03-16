@@ -41,8 +41,11 @@
     (println (reduce #(str %1 %2) (repeat size  "---")))))
 
 (defn pos-in-board? [pos-x pos-y board]
-  (and (< pos-x (size board))
-       (< pos-y (size board))))
+  (and
+   (>= pos-x 0)
+   (< pos-x (size board))
+   (>= pos-y 0)
+   (< pos-y (size board))))
 
 (defn add-block [board pos-x pos-y]
   (if (not (pos-in-board? pos-x pos-y board))
