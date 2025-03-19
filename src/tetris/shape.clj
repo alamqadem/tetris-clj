@@ -19,6 +19,15 @@
    (reduce max
            (map pos/y (pos-ls shape)))))
 
+(defn normalize
+  "Returns a shape where all the positions in pos-ls have pos subtracted"
+  [shape pos]
+  (make
+   (->>
+    (pos-ls shape)
+    (map (fn [p] (pos/sub p pos)))
+    (sort pos/compare-pos))))
+
 (def block (make [(pos/make 0 0)]))
 
 (def l (make [(pos/make 0 0)

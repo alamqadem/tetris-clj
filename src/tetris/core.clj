@@ -11,8 +11,7 @@
 (defn game-loop [board-size]
   (let [empty-game (game/make 0 [] board-size)]
     (loop [game empty-game]
-      (do
-        (graphical/print-board (game/->board game))
+      (graphical/print-board (game/->board game))
         (let [input (read-line)]
           (if (not= input "q")
             (let [movement (case input
@@ -23,7 +22,7 @@
               (if (game/game-over? game)
                 (println "game over...")
                 (recur (game/update-game game movement))))
-            (println "quitting...")))))))
+            (println "quitting..."))))))
 
 (defn -main
   [& args]

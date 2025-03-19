@@ -3,7 +3,7 @@
             [tetris.position :as pos]
             [tetris.shape :as shape]
             [tetris.piece :as piece]))
-;; game
+
 (defn make [time pieces size]
   {:time time,
    :pieces (seq pieces),
@@ -30,31 +30,54 @@
 (defn size-set! [game size]
   (make (game-time game) (pieces game) size))
 
-(defn current-piece [game]
-  ;; given a game returns the current piece that is failling
+(defn current-piece
+  "given a game returns the current piece that is failling"
+  [game]
   (first (pieces game)))
 
-(defn add-piece [game piece]
-  ;; adds a piece in such a way that the new piece is the current piece
+(defn add-piece
+  "adds a piece in such a way that the new piece is the current piece"
+  [game piece]
   (pieces-set! game
                (cons piece (pieces game))))
 
-(defn ->board [game]
-  ;; transforms a game into a board
-  (let [pieces (pieces game)
+(defn ->board
+   "transforms a game into a board"
+  [game]
+   (let [pieces (pieces game)
         board (graphical/make (size game))]
     (reduce (fn [board p] (piece/->board p board)) board pieces)))
 
-(defn pos-in-game? [game pos]
-  ;; returns true if a position is within a game matrix
+(defn to-str
+  "returns the string representation for a game"
+  [game]
+  (-> game
+      ->board
+      graphical/to-str))
+
+(defn ->game 
+  "Given a board, it calculates the corresponding game"
+  [board]
+  (let [pos-ls (graphical/->pos-ls board)
+        groups (pos/find-contiguous pos-ls)
+        pos-ls (map pos/min-pos groups)
+        shapes (map shape/make groups)
+        norm-shapes (map shape/normalize shapes pos-ls)
+        pieces (map piece/make norm-shapes pos-ls)]
+    (make 0 pieces (graphical/size board))))
+
+(defn pos-in-game?
+  "returns true if a position is within a game matrix"
+  [game pos]
   (and
    (>= (pos/x pos) 0)
    (>= (pos/y pos) 0)
    (< (pos/x pos) (size game))
    (< (pos/y pos) (size game))))
 
-(defn outside-of-boundaries? [game piece pos]
-  ;; returns true if moving piece in the game to pos makes it outside of the game boundaries
+(defn outside-of-boundaries?
+  "returns true if moving piece in the game to pos makes it outside of the game boundaries"
+  [game piece pos]
   (let [pos-ls (piece/->pos-ls (piece/pos-set! piece pos))]
     (some not (map (fn [p] (pos-in-game? game p)) pos-ls))))
 
@@ -143,8 +166,8 @@
   ;; => true
   (def game
     (make 0 [(piece/make shape/l (pos/make 1 1))
-                  (piece/make shape/block (pos/make 3 0))]
-               10))
+             (piece/make shape/block (pos/make 3 0))]
+          10))
 
   (def piece (get (pieces game) 1))
   (def pos (pos/make 1 1))
@@ -422,9 +445,8 @@
   (pos/pos-ls-intersect? (reduce concat other-pieces-pos-ls) piece-pos-ls-after-move)
   ;; => true
   (def game-test-collision1
-    (make 0 [
-                  (piece/make shape/l (pos/make 7 7))
-                  (piece/make shape/t (pos/make 6 5))] 10))
+    (make 0 [(piece/make shape/l (pos/make 7 7))
+             (piece/make shape/t (pos/make 6 5))] 10))
   (graphical/print-board (->board game-test-collision1))
   (def game-test-collision1-updated
     (update-game game-test-collision1))
@@ -460,4 +482,33 @@
 
   (move-piece? (make 0 [] 5) (piece/make shape/l (pos/make 0 2)) (pos/make -1 1))
    ;; {:pos (-1 1), :size 10}
+
+  (def board
+    (graphical/-make
+     [["   ", "[ ]", "[ ]", "[ ]", "   "]
+      ["   ", "   ", "[ ]", "   ", "   "]
+      ["   ", "   ", "   ", "   ", "[ ]"]
+      ["   ", "   ", "   ", "   ", "[ ]"]
+      ["   ", "   ", "   ", "[ ]", "[ ]"]]
+     5))
+
+  (->game board)
+  ;; => {:time 0,
+  ;;     :pieces
+  ;;     ({:shape {:pos-ls ((0 2) (1 0) (1 1) (1 2))}, :pos (3 2)}
+  ;;      {:shape {:pos-ls ((0 0) (1 0) (1 1) (2 0))}, :pos (1 0)}),
+  ;;     :size 5}
+
+  (to-str (->game board))
+  ;;---------------\n
+  ;;   [ ][ ][ ]   \n
+  ;;      [ ]      \n
+  ;;            [ ]\n
+  ;;            [ ]\n
+  ;;         [ ][ ]\n
+  ;;---------------"
+
+
   )
+
+

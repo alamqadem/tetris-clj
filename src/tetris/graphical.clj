@@ -1,6 +1,7 @@
 (ns tetris.graphical
   (:gen-class)
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [tetris.position :as pos]))
 
 ;; graphical system
 (defn row [n]
@@ -29,16 +30,17 @@
 (defn matrix-set! [board board-values]
       (-make board-values (size board)))
 
-
 (defn to-str [board]
-  (reduce #(str %1 "\n" %2)
-          (map #(reduce str %1) (matrix board))))
+  (let [size (size board)
+        board-content (reduce #(str %1 "\n" %2)
+                              (map #(apply str %1) (matrix board)))
+        board-border (apply str (repeat size "---"))]
+    (str board-border "\n"
+         board-content "\n"
+         board-border)))
 
 (defn print-board [board]
-  (let [size (size board)]
-    (println (reduce #(str %1 %2) (repeat size   "---")))
-    (println (to-str board))
-    (println (reduce #(str %1 %2) (repeat size  "---")))))
+  (println (to-str board)))
 
 (defn pos-in-board? [pos-x pos-y board]
   (and
@@ -57,6 +59,24 @@
         updated-board-row (assoc board-row pos-x "[ ]")
         new-board-values  (assoc board-values pos-y updated-board-row)]
     (matrix-set! board new-board-values)))
+
+(defn get-block [board x y]
+  (get (get (matrix board) y) x))
+
+(defn has-block?
+  "Returns true if the board has a block in position x,y"
+  ([board pos]
+   (has-block? board (pos/x pos) (pos/y pos)))
+  ([board x y]
+   (= (get-block board x y) "[ ]")))
+
+(defn ->pos-ls
+  "Returns the list of positions that have a block in the board"
+  [board]
+  (let [size-range (range (size board))
+        pos-ls (for [x size-range, y size-range] (pos/make x y))
+        board-has-block? (partial has-block? board)]
+    (filter board-has-block? pos-ls)))
 
 (defn add-rand-block [board]
   (add-block board (rand-int (size board)) 0))
@@ -218,4 +238,32 @@
   ;;      ["   " "   " "   " "   " "   "]
   ;;      ["   " "   " "   " "   " "   "]
   ;;      ["   " "   " "   " "   " "   "]],
-  (print-board board-with-a-shape))
+  (print-board board-with-a-shape)
+
+  (def board
+    (-make
+     [["   ", "[ ]", "[ ]", "[ ]", "   "]
+      ["   ", "   ", "[ ]", "   ", "   "]
+      ["   ", "   ", "   ", "   ", "[ ]"]
+      ["   ", "   ", "   ", "   ", "[ ]"]
+      ["   ", "   ", "   ", "[ ]", "[ ]"]]
+     5))
+
+  board
+  ;; => {:board
+  ;;     [["   " "[ ]" "[ ]" "[ ]" "   "]
+  ;;      ["   " "   " "[ ]" "   " "   "]
+  ;;      ["   " "   " "   " "   " "[ ]"]
+  ;;      ["   " "   " "   " "   " "[ ]"]
+  ;;      ["   " "   " "   " "[ ]" "[ ]"]],
+  ;;     :size 5}
+
+  (def pos-ls (->>
+               (let [size-range (range (size board))]
+                 (for [x size-range, y size-range]
+                   (pos/make x y)))
+               (filter (fn [pos]
+                         (has-block? board pos)))))
+  pos-ls
+  ;; => ((1 0) (2 0) (2 1) (3 0) (3 4) (4 2) (4 3) (4 4))
+  )

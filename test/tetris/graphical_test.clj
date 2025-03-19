@@ -38,18 +38,34 @@
     (testing "to string works correctly"
       (is (=
            (to-str board)
-           (str "               \n"
+           (str "---------------\n"
                 "               \n"
                 "               \n"
                 "               \n"
-                "               ")))
+                "               \n"
+                "               \n"
+                "---------------")))
       (is (=
            (to-str (add-block board 4 4))
-           (str "               \n"
+           (str "---------------\n"
                 "               \n"
                 "               \n"
                 "               \n"
-                "            [ ]"))))))
+                "               \n"
+                "            [ ]\n"
+                "---------------"))))))
+
+(deftest test-new-ops
+  (testing "get from a board the list of positions of the blocks"
+    (let [board (-make
+                 [["   ", "[ ]", "[ ]", "[ ]", "   "]
+                  ["   ", "   ", "[ ]", "   ", "   "]
+                  ["   ", "   ", "   ", "   ", "[ ]"]
+                  ["   ", "   ", "   ", "   ", "[ ]"]
+                  ["   ", "   ", "   ", "[ ]", "[ ]"]]
+                 5)]
+      (is (= '((1 0) (2 0) (2 1) (3 0) (3 4) (4 2) (4 3) (4 4))
+             (->pos-ls board))))))
 
 
 
