@@ -11,18 +11,19 @@
 (defn game-loop [board-size]
   (let [empty-game (game/make 0 [] board-size)]
     (loop [game empty-game]
-      (graphical/print-board (game/->board game))
-        (let [input (read-line)]
-          (if (not= input "q")
-            (let [movement (case input
-                             "a" (pos/make -1 0)
-                             "d" (pos/make 1 0)
-                             (pos/make 0 0))]
-              (flush)
-              (if (game/game-over? game)
-                (println "game over...")
-                (recur (game/update-game game movement))))
-            (println "quitting..."))))))
+      (println (game/to-str game))
+      (let [input (read-line)]
+        (if (not= input "q")
+          (let [movement (case input
+                           "a" (pos/make -1 0)
+                           "d" (pos/make 1 0)
+                           (pos/make 0 0))
+                flip? (= input "s")]
+            (flush)
+            (if (game/game-over? game)
+              (println "game over...")
+              (recur (game/update-game game movement flip?))))
+          (println "quitting..."))))))
 
 (defn -main
   [& args]
@@ -157,6 +158,8 @@
   ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
   ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]],
   ;;     :size 10}
+
+  ;; separator :P
   )
   
   

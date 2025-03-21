@@ -28,6 +28,15 @@
     (map (fn [p] (pos/sub p pos)))
     (sort pos/compare-pos))))
 
+(defn flip
+  "Returns the shape flipped by 90' anti-clockwise"
+  [shape]
+  (let [pos-ls (pos-ls shape)
+        flipped-pos-ls (map pos/flip-90 pos-ls)
+        shift (pos/min-pos flipped-pos-ls 0)
+        flipped-shifted-pos-ls (map (partial pos/add shift) flipped-pos-ls)]
+    (make flipped-shifted-pos-ls)))
+
 (def block (make [(pos/make 0 0)]))
 
 (def l (make [(pos/make 0 0)
@@ -75,5 +84,8 @@
   ;; calculate width
   (reduce max (map pos/x (pos-ls l)))l
   ;; => 1
+
+  (flip l)
+  ;; => {:pos-ls ((0 0) (1 0) (2 0) (2 1))}
   )
 

@@ -1,6 +1,7 @@
 (ns tetris.graphical-test
   (:require [clojure.test :refer :all]
-            [tetris.graphical :refer :all]))
+            [tetris.graphical :refer :all]
+            [clojure.string]))
 
 (deftest matrix-create
   (testing "that row returns a vector"
@@ -66,6 +67,36 @@
                  5)]
       (is (= '((1 0) (2 0) (2 1) (3 0) (3 4) (4 2) (4 3) (4 4))
              (->pos-ls board))))))
+
+(deftest test-from-str
+  (testing "converting the str representation into a board"
+    (let [board-as-str
+          (clojure.string/join "\n" ["------------------------------"
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                  [ ][ ][ ][ ]"
+                                     "                              "
+                                     "------------------------------"])]
+      (is (=
+           (from-str board-as-str)
+           {:board
+            [["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+             ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+             ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+             ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+             ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+             ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+             ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+             ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+             ["   " "   " "   " "   " "   " "   " "[ ]" "[ ]" "[ ]" "[ ]"]
+             ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]]
+            :size 10})))))
 
 
 

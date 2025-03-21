@@ -33,10 +33,14 @@
 
 (defn min-pos
   "Returns the minimum position calculate by combining the min x and the min y"
-  [pos-ls]
-  (make
-   (apply min (map x pos-ls))
-   (apply min (map y pos-ls))))
+  ([pos-ls]
+   (make
+    (apply min (map x pos-ls))
+    (apply min (map y pos-ls))))
+  ([pos-ls min-val]
+   (make
+    (abs (apply min (cons min-val (map x pos-ls))))
+    (abs (apply min (cons min-val (map y pos-ls)))))))
 
 (defn compare-pos
   "Compares 2 positions to sort them"
@@ -44,6 +48,16 @@
   (let [factor 2]
     (+ (* (- (x pos1) (x pos2)) factor)
        (- (y pos1) (y pos2)))))
+
+(defn flip
+  "Returns a position with the coordinates x and y flipped"
+  [pos]
+  (make (y pos) (x pos)))
+
+(defn flip-90
+  "Applies a 90' anti clockwise rotation to the vector represented by the position"
+  [pos]
+  (make (* -1 (y pos)) (x pos)))
 
 (defn contiguos?
   "Returns true if 2 positions are next to each other"
@@ -122,4 +136,7 @@
 
   (sort compare-pos '((0 2) (1 0) (1 1) (1 2)))
   ;; => ((0 2) (1 0) (1 1) (1 2))
+
+  (flip (make 0 1))
+  ;; => (1 0)
   )

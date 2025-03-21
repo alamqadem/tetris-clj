@@ -39,6 +39,20 @@
          board-content "\n"
          board-border)))
 
+(defn from-str-ls
+  "create a board given its string representation as a list of lines"
+  [board-str-lines]
+  (let [board-lines-without-border (drop-last 1 (drop 1 board-str-lines))
+        lines-splitted (map (partial re-seq #"\s\s\s|\[\s\]")
+                            board-lines-without-border)
+        matrix (into [] (map (partial into []) lines-splitted))]
+    (-make matrix (count matrix))))
+
+(defn from-str
+  "create a board given its string representation"
+  [board-as-str]
+  (from-str-ls (str/split-lines board-as-str)))
+
 (defn print-board [board]
   (println (to-str board)))
 
@@ -82,13 +96,13 @@
   (add-block board (rand-int (size board)) 0))
 
 (defn move-board [board]
-      (let [size (size board)
+  (let [size (size board)
         board-values (matrix board)
         new-board-values
-          (into []
-                (concat [(row size)]
-                        (take (- size 1) board-values)))]
-           (matrix-set! board new-board-values)))
+        (into []
+              (concat [(row size)]
+                      (take (- size 1) board-values)))]
+    (matrix-set! board new-board-values)))
 
 (comment
   (repeat 3 "[ ]")
@@ -266,4 +280,104 @@
                          (has-block? board pos)))))
   pos-ls
   ;; => ((1 0) (2 0) (2 1) (3 0) (3 4) (4 2) (4 3) (4 4))
+  (defn long-str [& strings]
+    (str/join "\n" strings))
+
+  (def board-as-str
+    (long-str
+     "------------------------------"
+     "                              "
+     "                              "
+     "                              "
+     "                              "
+     "                              "
+     "                              "
+     "                              "
+     "                              "
+     "                  [ ][ ][ ][ ]"
+     "                              "
+     "------------------------------"))
+
+  (println board-as-str)
+
+  (def board-as-lines (str/split-lines board-as-str))
+  board-as-lines
+  ;; => ["------------------------------"
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                  [ ][ ][ ][ ]"
+  ;;     "                              "
+  ;;     "------------------------------"]
+
+  ;; split every 3 character (I should probably put this number somewhere)
+  (re-seq #"\s\s\s|\[\s\]" (board-as-lines 1))
+  ;; => ("   " "   " "   " "   " "   " "   " "   " "   " "   " "   ")
+  (re-seq #"\s\s\s|\[\s\]" (board-as-lines 9))
+  ;; => ("   " "   " "   " "   " "   " "   " "[ ]" "[ ]" "[ ]" "[ ]")
+  ;; skip the first and the last lines
+  (def board-lines-without-border (drop-last 1 (drop 1 board-as-lines)))
+  board-lines-without-border
+  ;; => ("                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                              "
+  ;;     "                  [ ][ ][ ][ ]"
+  ;;     "                              ")
+
+  (def lines-splitted (map (partial re-seq #"\s\s\s|\[\s\]") board-lines-without-border))
+  lines-splitted
+  ;; => (("   " "   " "   " "   " "   " "   " "   " "   " "   " "   ")
+  ;;     ("   " "   " "   " "   " "   " "   " "   " "   " "   " "   ")
+  ;;     ("   " "   " "   " "   " "   " "   " "   " "   " "   " "   ")
+  ;;     ("   " "   " "   " "   " "   " "   " "   " "   " "   " "   ")
+  ;;     ("   " "   " "   " "   " "   " "   " "   " "   " "   " "   ")
+  ;;     ("   " "   " "   " "   " "   " "   " "   " "   " "   " "   ")
+  ;;     ("   " "   " "   " "   " "   " "   " "   " "   " "   " "   ")
+  ;;     ("   " "   " "   " "   " "   " "   " "   " "   " "   " "   ")
+  ;;     ("   " "   " "   " "   " "   " "   " "[ ]" "[ ]" "[ ]" "[ ]")
+  ;;     ("   " "   " "   " "   " "   " "   " "   " "   " "   " "   "))
+  (def matrix (into [] (map (partial into []) lines-splitted)))
+  matrix
+  ;; => [["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;     ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;     ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;     ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;     ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;     ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;     ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;     ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;     ["   " "   " "   " "   " "   " "   " "[ ]" "[ ]" "[ ]" "[ ]"]
+  ;;     ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]]
+  (count matrix)
+  p  ;; => 10
+  (count (matrix 0))
+  ;; => 10
+  ;; let's put everything in a board
+  (let [board-lines-without-border (drop-last 1 (drop 1 board-as-lines))
+        lines-splitted (map (partial re-seq #"\s\s\s|\[\s\]") board-lines-without-border)
+        matrix (into [] (map (partial into []) lines-splitted))]
+    (-make matrix (count matrix)))
+  ;; => {:board
+  ;;     [["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "[ ]" "[ ]" "[ ]" "[ ]"]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]],
+  ;;     :size 10}
   )
+
