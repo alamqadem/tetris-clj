@@ -833,6 +833,9 @@
   ;;     :pieces ({:shape {:pos-ls ((0 0) (0 1) (1 0) (2 0))}, :pos (1 1)})
   ;;     :size 10}
 
+  (current-piece (flip-current-piece game))
+  ;; => {:shape {:pos-ls ((2 0) (1 0) (0 0) (0 1))}, :pos (0 1)}
+
   (defn flip-test [piece]
     (let [pos-ls (-> piece piece/shape shape/pos-ls)
           new-pos-ls (map (fn [p]
