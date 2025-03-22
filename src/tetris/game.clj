@@ -4,10 +4,14 @@
             [tetris.shape :as shape]
             [tetris.piece :as piece]))
 
-(defn make [time pieces size]
-  {:time time,
-   :pieces (seq pieces),
-   :size size})
+(defn make
+  ([time pieces size]
+   (make time pieces size 0))
+  ([time pieces size points]
+   {:time time,
+    :pieces (seq pieces),
+    :size size
+    :points points}))
 
 (defn game-time [game]
   (get game :time))
@@ -18,17 +22,24 @@
 (defn size [game]
   (get game :size))
 
+(defn points [game]
+  (:points game))
+
 (defn game-time-set! [game time]
   (make
    time
    (pieces game)
-   (size game)))
+   (size game)
+   (points game)))
 
 (defn pieces-set! [game pieces]
-  (make (game-time game) pieces (size game)))
+  (make (game-time game) pieces (size game) (points game)))
 
 (defn size-set! [game size]
-  (make (game-time game) (pieces game) size))
+  (make (game-time game) (pieces game) size (points game)))
+
+(defn points-set! [game points]
+  (make (game-time game) (pieces game) (size game) points))
 
 (defn current-piece
   "given a game returns the current piece that is failling"
