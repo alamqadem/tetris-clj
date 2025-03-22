@@ -13,6 +13,13 @@
 (defn pos-set! [piece pos]
   (make (shape piece) pos))
 
+(defn eq? [piece1 piece2]
+  (and (shape/eq? (shape piece1) (shape piece2))
+       (pos/eq? (pos piece1) (pos piece2))))
+
+(defn not-eq? [piece1 piece2]
+  (not (eq? piece1 piece2)))
+
 (defn ->pos-ls [piece]
   (let [pos (pos piece),
         pos-ls (shape/pos-ls (shape piece))]
@@ -26,6 +33,11 @@
                                  (pos/y pos)))
           init-board
           (->pos-ls piece)))
+
+(defn collision?
+  "Checks if 2 pieces collide"
+  [piece1 piece2]
+  (pos/pos-ls-intersect? (->pos-ls piece1) (->pos-ls piece2)))
 
 (defn flip
   "Flips a piece 90' anti-clockwise"

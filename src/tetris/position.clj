@@ -20,6 +20,9 @@
   (and (= (x pos1) (x pos2))
        (= (y pos1) (y pos2))))
 
+(defn pos-ls-eq? [pos-ls1 pos-ls2]
+  (every? true? (map eq? pos-ls1 pos-ls2)))
+
 (defn in-pos-ls? [pos pos-ls]
   (some (fn [p] (eq? pos p)) pos-ls))
 
@@ -143,4 +146,13 @@
 
   (flip-90 (make 0 1))
   ;; => (-1 0)
+
+  ;; trying to create pos-ls-eq?
+  (every? true? (map = [1 2 3] [1 2 3]))
+  ;; => true
+
+  (every? true? (map = [1 2 3] [1 3 3]))
+  ;; => false
+
+
   )

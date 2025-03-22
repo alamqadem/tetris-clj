@@ -6,6 +6,9 @@
 
 (defn pos-ls [shape] (get shape :pos-ls))
 
+(defn eq? [shape1 shape2]
+  (pos/pos-ls-eq? (pos-ls shape1) (pos-ls shape2)))
+
 (defn width [shape]
   ;; returns the width of a shape
   ;; the real implemenation should be (- (max pos/x) (min pos/x))

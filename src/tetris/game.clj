@@ -46,6 +46,16 @@
   [game]
   (first (pieces game)))
 
+(defn rest-pieces
+  "returns all the pieces except the current piece"
+  [game]
+  (rest (pieces game)))
+
+(defn other-pieces
+  "returns all the pieces that are not piece"
+  [game piece]
+  (filter (partial piece/not-eq? piece) (pieces game)))
+
 (defn add-piece
   "adds a piece in such a way that the new piece is the current piece"
   [game piece]
@@ -99,10 +109,9 @@
 
 (defn collision-with-other-piece? [game piece pos]
   ;; returns true if piece moved to pos collides with another piece
-  (let [other-pieces (filter (fn [p] (not= p piece)) (pieces game))
-        other-pieces-pos-ls (mapcat piece/->pos-ls other-pieces)
-        piece-pos-ls-after-move (piece/->pos-ls (piece/pos-set! piece pos))]
-    (pos/pos-ls-intersect? other-pieces-pos-ls piece-pos-ls-after-move)))
+  (let [other-pieces-ls (other-pieces game piece)
+        piece-after-move (piece/pos-set! piece pos)]
+    (some (partial piece/collision? piece-after-move) other-pieces-ls)))
 
 (defn can-move?
   "true if it can move a piece in game to pos, false otherwise"
@@ -122,7 +131,7 @@
      (move-piece game piece pos)))
   ([game piece new-pos]
    (let [new-piece (piece/pos-set! piece new-pos)
-         pieces (filter (fn [p] (not= p piece)) (pieces game))]
+         pieces (other-pieces game piece)]
      (add-piece (pieces-set! game pieces) new-piece))))
 
 (defn add-random-piece [game]
@@ -143,7 +152,7 @@
   [game]
   (let [piece (current-piece game)
         flipped-piece (piece/flip piece)
-        game-without-current (pieces-set! game (rest (pieces game)))]
+        game-without-current (pieces-set! game (rest-pieces game))]
     (if (can-flip? game-without-current flipped-piece)
       (add-piece game-without-current flipped-piece)
       game)))
