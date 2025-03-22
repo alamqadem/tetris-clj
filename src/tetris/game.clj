@@ -93,12 +93,12 @@
         piece-pos-ls-after-move (piece/->pos-ls (piece/pos-set! piece pos))]
     (pos/pos-ls-intersect? other-pieces-pos-ls piece-pos-ls-after-move)))
 
-(defn move-piece?
-  "true if it can move a piece to pos, false otherwise"
+(defn can-move?
+  "true if it can move a piece in game to pos, false otherwise"
   ([game movement]
    (let [piece (current-piece game)
          pos (pos/add (piece/pos piece) movement)]
-     (move-piece? game piece pos)))
+     (can-move? game piece pos)))
   ([game piece pos]
    (not (or
          (outside-of-boundaries? game piece pos)
@@ -125,7 +125,7 @@
 (defn can-flip?
   [game flipped-piece]
   ;; take the current piece out, flip it and see if it can be moved there
-  (move-piece? game flipped-piece (piece/pos flipped-piece)))
+  (can-move? game flipped-piece (piece/pos flipped-piece)))
 
 (defn flip-current-piece
   "Flips the current piece and updates the game"
@@ -145,7 +145,7 @@
             new-pos (pos/add pos (pos/make 0 1))]
         (and
          (= (pos/y pos) 0)
-         (not (move-piece? game piece new-pos)))))))
+         (not (can-move? game piece new-pos)))))))
 
 (defn update-game
   ([game]
@@ -162,12 +162,12 @@
                             (flip-current-piece game-updated)
                             game-updated)
              ;; apply movement left/right
-             game-updated (if (move-piece? game-updated movement)
+             game-updated (if (can-move? game-updated movement)
                             (move-piece game-updated movement)
                             game-updated)]
          ;; move current piece down by 1 if present
          ;; if the current piece cannot move add a new random piece
-         (if (move-piece? game-updated down-by-1)
+         (if (can-move? game-updated down-by-1)
            (move-piece game-updated down-by-1)
            (add-random-piece game-updated)))))))
 
@@ -447,7 +447,7 @@
   (collision-with-other-piece? game-test-collision sq-piece new-pos)
   ;; => nil
 
-  (move-piece? game-test-collision sq-piece new-pos)
+  (can-move? game-test-collision sq-piece new-pos)
 
   (def updated-game (update-game game-test-collision))
 
@@ -490,7 +490,7 @@
   (def new-pos (pos/add (pos/make 6 5) (pos/make 0 1)))
   new-pos
   ;; => (6 6)
-  (move-piece? game-test-collision1 curr-piece new-pos)
+  (can-move? game-test-collision1 curr-piece new-pos)
   (collision-with-other-piece? game-test-collision1 curr-piece new-pos)
   (def other-pieces (filter (fn [p] (not= p curr-piece)) (pieces game-test-collision1)))
   other-pieces
@@ -513,7 +513,7 @@
   (pos/pos-ls-intersect? other-pieces-pos-ls piece-pos-ls-after-move)
   ;; => true
 
-  (move-piece? (make 0 [] 5) (piece/make shape/l (pos/make 0 2)) (pos/make -1 1))
+  (can-move? (make 0 [] 5) (piece/make shape/l (pos/make 0 2)) (pos/make -1 1))
    ;; {:pos (-1 1), :size 10}
 
   (def board

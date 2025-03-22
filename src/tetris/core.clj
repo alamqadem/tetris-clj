@@ -131,7 +131,7 @@
   (def piece (first (game/pieces game)))
   (def new-pos (pos/add (piece/pos piece) (pos/make 0 1)))
 
-  (game/move-piece? game piece new-pos)
+  (game/can-move? game piece new-pos)
   ;; => true
   (game/outside-of-boundaries? game piece new-pos)
   ;; => false
