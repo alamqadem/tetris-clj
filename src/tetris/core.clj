@@ -11,7 +11,7 @@
 (defn game-loop [board-size]
   (let [empty-game (game/make 0 [] board-size)]
     (loop [game empty-game]
-      (println (game/to-str game))
+      (game/print-game game)
       (let [input (read-line)]
         (if (not= input "q")
           (let [movement (case input

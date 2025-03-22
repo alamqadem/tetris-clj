@@ -72,25 +72,33 @@
 (defn to-str
   "returns the string representation for a game"
   [game]
+  (graphical/to-str (->board game)))
+
+(defn to-str-status
+  "returns the string representing the status of a game"
+  [game]
   (let [game-info (str (game-time game))
         status-length (count game-info)
         spaces (apply str (repeat (- (* (size game) 3) status-length) " "))
-        status-bar (str spaces game-info)
-        game-as-str (graphical/to-str (->board game))]
-    (str game-as-str
-         "\n"
-         status-bar)))
+        status-bar (str spaces game-info)]
+    status-bar))
 
-  (defn ->game
-    "Given a board, it calculates the corresponding game"
-    [board]
-    (let [pos-ls (graphical/->pos-ls board)
-          groups (pos/find-contiguous pos-ls)
-          pos-ls (map pos/min-pos groups)
-          shapes (map shape/make groups)
-          norm-shapes (map shape/normalize shapes pos-ls)
-          pieces (map piece/make norm-shapes pos-ls)]
-      (make 0 pieces (graphical/size board))))
+(defn print-game
+  "prints a game on the output including the status"
+  [game]
+  (println (to-str game))
+  (println (to-str-status game)))
+
+(defn ->game
+  "Given a board, it calculates the corresponding game"
+  [board]
+  (let [pos-ls (graphical/->pos-ls board)
+        groups (pos/find-contiguous pos-ls)
+        pos-ls (map pos/min-pos groups)
+        shapes (map shape/make groups)
+        norm-shapes (map shape/normalize shapes pos-ls)
+        pieces (map piece/make norm-shapes pos-ls)]
+    (make 0 pieces (graphical/size board))))
 
 (defn pos-in-game?
   "returns true if a position is within a game matrix"
