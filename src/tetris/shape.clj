@@ -36,7 +36,7 @@
   [shape]
   (let [pos-ls (pos-ls shape)
         flipped-pos-ls (map pos/flip-90 pos-ls)
-        shift (pos/min-pos flipped-pos-ls 0)
+        shift (pos/abs-pos (pos/min-pos (cons (pos/make 0 0) flipped-pos-ls)))
         flipped-shifted-pos-ls (map (partial pos/add shift) flipped-pos-ls)]
     (make flipped-shifted-pos-ls)))
 

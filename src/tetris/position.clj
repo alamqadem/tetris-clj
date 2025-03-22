@@ -36,11 +36,12 @@
   ([pos-ls]
    (make
     (apply min (map x pos-ls))
-    (apply min (map y pos-ls))))
-  ([pos-ls min-val]
-   (make
-    (abs (apply min (cons min-val (map x pos-ls))))
-    (abs (apply min (cons min-val (map y pos-ls)))))))
+    (apply min (map y pos-ls)))))
+
+(defn abs-pos
+  "Returns the absolute value applied on the coordinates"
+  [pos]
+  (make (abs (x pos)) (abs (y pos))))
 
 (defn compare-pos
   "Compares 2 positions to sort them"

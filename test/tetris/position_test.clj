@@ -11,6 +11,14 @@
     (is (not (eq? (make 0 0) (make 1 0)))))
   (testing "position flipping"
     (is (eq? (flip-90 (make 0 1)) (make -1 0))))
+  (testing "position abs operation"
+    (is (eq? (abs-pos (make -1 0)) (make 1 0)))
+    (is (eq? (abs-pos (make 1 0)) (make 1 0)))
+    (is (eq? (abs-pos (make 0 0)) (make 0 0)))
+    (is (eq? (abs-pos (make 1 -1)) (make 1 1)))
+    )
+  (testing "position minimum"
+    (is (eq? (min-pos (list (make 1 2) (make 3 0))) (make 1 0))))
   (testing "contiguos operations"
     (let [pos-ls (list (make 1 0) (make 2 0) (make 2 1) (make 3 0)
                        (make 3 4) (make 4 2) (make 4 3) (make 4 4))]
