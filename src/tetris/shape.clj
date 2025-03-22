@@ -43,6 +43,13 @@
         flipped-shifted-pos-ls (map (partial pos/add shift) flipped-pos-ls)]
     (make flipped-shifted-pos-ls)))
 
+(defn shift
+  "Returns the difference on the height and width between shape1 and shape2"
+  [shape1 shape2]
+  (let [ width-diff (- (width shape1) (width shape2))
+        height-diff (- (height shape1) (height shape2))]
+    (pos/make width-diff height-diff)))
+
 (def block (make [(pos/make 0 0)]))
 
 (def l (make [(pos/make 0 0)

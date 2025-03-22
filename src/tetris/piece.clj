@@ -44,14 +44,8 @@
   [piece]
   (let [old-shape (shape piece)
         new-shape (shape/flip (shape piece))
-        old-height (shape/height old-shape)
-        old-width (shape/width old-shape)
-        new-height (shape/height new-shape)
-        new-width (shape/width new-shape)
         old-pos (pos piece)
-        width-diff (- old-width new-width)
-        height-diff (- old-height new-height)
-        shift (pos/make width-diff height-diff)
+        shift (shape/shift old-shape new-shape)
         new-pos (pos/add old-pos shift)]
     (make new-shape new-pos)))
 
