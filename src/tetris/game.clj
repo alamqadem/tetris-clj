@@ -165,6 +165,53 @@
       (add-piece game-without-current flipped-piece)
       game)))
 
+(defn row-is-full?
+  "Checks if the given row index is full"
+  [game row-index]
+  (let [pieces-ls (pieces game)
+        all-pos-ls (mapcat piece/->pos-ls pieces-ls)
+        pos-ls-in-row (filter (fn [p] (= (pos/y p) row-index)) all-pos-ls)]
+    (= (count pos-ls-in-row) (size game))))
+
+(defn full-rows
+  "Returns a list of all the row indexes that are full"
+  [game]
+  (filter (partial row-is-full? game) (range 0 (size game))))
+
+(defn remove-full-rows
+  "Returns a game with all the full-rows removed"
+  [game full-rows]
+  (let [remove-full-rows-fn (fn [p] (piece/remove-rows p full-rows))
+        pieces-without-full-rows (map remove-full-rows-fn (pieces game))
+        not-empty-piece? (comp not empty? piece/->pos-ls)
+        pieces-that-are-not-empty (filter not-empty-piece?
+                                          pieces-without-full-rows)
+        game-updated (pieces-set! game pieces-that-are-not-empty)]
+    game-updated))
+
+(defn move-all-pieces-down
+  [game]
+  (let [down-by-1 (pos/make 0 1)
+        can-move-piece?        (fn [game piece]
+                                 (let [new-pos (pos/add
+                                                (piece/pos piece)
+                                                down-by-1)]
+                                   (can-move? game piece new-pos)))
+        pieces-that-can-be-moved (filter (partial can-move-piece? game)
+                                         (pieces game))]
+    (if (empty? pieces-that-can-be-moved)
+      game
+      (let [game-with-moved-pieces (reduce (fn [game piece]
+                                             (let [new-pos
+                                                   (pos/add
+                                                    (piece/pos piece)
+                                                    down-by-1)]
+                                               (move-piece game piece
+                                                           new-pos)))
+                                           game
+                                           pieces-that-can-be-moved)]
+        (recur game-with-moved-pieces)))))
+
 (defn game-over? [game]
   (let [piece (current-piece game)]
     (if (not piece)
@@ -197,7 +244,10 @@
          ;; if the current piece cannot move add a new random piece
          (if (can-move? game-updated down-by-1)
            (move-piece game-updated down-by-1)
-           (add-random-piece game-updated)))))))
+           (let [full-rows-ls (full-rows game-updated)
+                 game-updated (remove-full-rows game-updated full-rows-ls)
+                 game-updated (move-all-pieces-down game-updated)]
+             (add-random-piece game-updated))))))))
 
 (comment
   {:time 0,
@@ -908,6 +958,149 @@
                       "[ ]         [ ][ ]            "
                       "[ ][ ][ ][ ][ ][ ][ ][ ]      "
                       "------------------------------"])))
+
+  ;; testing how to check if a row is full
+  (def game (->game (graphical/from-str-ls
+                     ["---------------"
+                      "               "
+                      "               "
+                      "               "
+                      "[ ][ ][ ]   [ ]"
+                      "[ ][ ][ ][ ][ ]"
+                      "---------------"])))
+
+  game
+  ;; => {:time 0,
+  ;;     :pieces
+  ;;     ({:shape {:pos-ls ((0 0))}, :pos (4 3)}
+  ;;      {:shape
+  ;;       {:pos-ls ((0 0) (0 1) (1 0) (1 1) (2 0) (2 1) (3 1) (4 1))},
+  ;;       :pos (0 3)}),
+  ;;     :size 5,
+  ;;     :points 0}
+
+  (def pieces-ls (pieces game))
+  pieces-ls
+  ;; => ({:shape {:pos-ls ((0 0))}, :pos (4 3)}
+  ;;     {:shape {:pos-ls ((0 0) (0 1) (1 0) (1 1) (2 0) (2 1) (3 1) (4 1))},
+  ;;      :pos (0 3)})
+
+  (def all-pos-ls (mapcat piece/->pos-ls pieces-ls))
+  all-pos-ls
+  ;; => ((4 3) (0 3) (0 4) (1 3) (1 4) (2 3) (2 4) (3 4) (4 4))
+
+  ;; check row 5
+  (def pos-ls-in-row-5 (filter (fn [p] (= (pos/y p) 4)) all-pos-ls))
+  pos-ls-in-row-5
+  ;; => ((0 4) (1 4) (2 4) (3 4) (4 4))
+  (count pos-ls-in-row-5)
+
+  ;; combining everything
+  ;; => 5
+  (let [pieces-ls (pieces game)
+        all-pos-ls (mapcat piece/->pos-ls pieces-ls)
+        pos-ls-in-row-5 (filter (fn [p] (= (pos/y p) 4)) all-pos-ls)]
+    (= (count pos-ls-in-row-5) 5))
+  ;; => true
+
+  (let [pieces-ls (pieces game)
+        all-pos-ls (mapcat piece/->pos-ls pieces-ls)
+        pos-ls-in-row-4 (filter (fn [p] (= (pos/y p) 3)) all-pos-ls)]
+    (= (count pos-ls-in-row-4) 5))
+  ;; => false
+  (row-is-full? game 4)
+  ;; => true
+  (row-is-full? game 3)
+  ;; => false
+
+  (def full-rows-ls (full-rows game))
+  full-rows-ls
+  ;; => (4)
+
+  ((comp not empty?) '(1 2 3))
+  ;; => true
+
+  ((comp not empty?) '())
+  ;; => false
+
+  (def game-without-full-rows (remove-full-rows game full-rows-ls))
+  game-without-full-rows
+  ;; => {:time 0,
+  ;;     :pieces
+  ;;     ({:shape {:pos-ls ((0 0))}, :pos (4 3)}
+  ;;      {:shape {:pos-ls ((0 1) (1 1) (2 1))}, :pos (0 3)}),
+  ;;     :size 5,
+  ;;     :points 0}
+
+  (to-str game-without-full-rows)
+  ;; "---------------"
+  ;; "               "
+  ;; "               "
+  ;; "               "
+  ;; "            [ ]"
+  ;; "[ ][ ][ ]      "
+  ;; "---------------"
+
+  (def shape {:pos-ls '((0 0) (0 1) (1 0) (1 1) (2 0) (2 1) (3 1) (4 1))})
+  (def row 1)
+  (vals (group-by (fn [p] (= (pos/y p) row)) (shape/pos-ls shape)))
+  ;; => ([(0 0) (1 0) (2 0)] [(0 1) (1 1) (2 1) (3 1) (4 1)])
+
+  (def other-pos ['(0 0) '(1 0) '(2 0)])
+
+  (def pos-above-row? (fn [p] (< (pos/y p) row)))
+  ;; I was using group-by to split the elements in a list that satisfied a predicate and the others
+  ;; but when everything satistifies the predicate then we get only one list when doing vals
+  (group-by pos-above-row? other-pos)
+  ;; => {true [(0 0) (1 0) (2 0)]}
+  ((group-by pos-above-row? other-pos) false)
+  ;; => nil
+  (vals (group-by pos-above-row? other-pos))
+  ;; => ([(0 0) (1 0) (2 0)])
+
+  ;; let's apply gravity and make all the position that can go down, go down
+  (def down-by-1 (pos/make 0 1))
+  (def can-move-piece?
+    (fn [piece]
+      (let [new-pos (pos/add (piece/pos piece) down-by-1)]
+        (can-move? game-without-full-rows piece new-pos))))
+
+  (def piece-that-can-be-moved (first (pieces game-without-full-rows)))
+  piece-that-can-be-moved
+  ;; => {:shape {:pos-ls ((0 0))}, :pos (4 3)}
+
+  (can-move-piece? piece-that-can-be-moved)
+  ;; => true
+
+  (def pieces-that-can-be-moved
+    (filter can-move-piece?
+            (pieces game-without-full-rows)))
+  pieces-that-can-be-moved
+  ;; => ({:shape {:pos-ls ((0 0))}, :pos (4 3)})
+
+  (def game-with-moved-pieces
+    (reduce (fn [game piece]
+              (let [new-pos (pos/add (piece/pos piece) down-by-1)]
+                (move-piece game piece new-pos)))
+            game-without-full-rows
+            pieces-that-can-be-moved))
+  game-with-moved-pieces
+  ;; => {:time 0,
+  ;;     :pieces
+  ;;     ({:shape {:pos-ls ((0 0))}, :pos (4 4)}
+  ;;      {:shape {:pos-ls ((0 1) (1 1) (2 1))}, :pos (0 3)}),
+  ;;     :size 5,
+  ;;     :points 0}
+  (to-str game-with-moved-pieces)
+  ;;---------------\n
+  ;;               \n
+  ;;               \n
+  ;;               \n
+  ;;               \n
+  ;;[ ][ ][ ]   [ ]\n
+  ;;---------------
+
+  ;; we will need to keep doing this until there are no pieces to move
 
 ;; separator :P
   )

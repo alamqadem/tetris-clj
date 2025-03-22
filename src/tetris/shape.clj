@@ -50,6 +50,20 @@
         height-diff (- (height shape1) (height shape2))]
     (pos/make width-diff height-diff)))
 
+(defn remove-row
+  [shape row]
+  (let [pos-to-remove (filter (fn [p] (= (pos/y p) row)) (pos-ls shape))]
+    (if (empty? pos-to-remove)
+      shape
+      (let [pos-above-row? (fn [p] (< (pos/y p) row))
+            pos-below-row? (fn [p] (> (pos/y p) row))
+            pos-above-row (filter pos-above-row? (pos-ls shape))
+            pos-below-row (filter pos-below-row? (pos-ls shape))
+            down-by-1 (fn [p] (pos/make (pos/x p) (inc (pos/y p))))
+            down-by-1-above-row (map down-by-1 pos-above-row)]
+        (make (concat down-by-1-above-row pos-below-row))))))
+
+
 (def block (make [(pos/make 0 0)]))
 
 (def l (make [(pos/make 0 0)
@@ -102,6 +116,11 @@
   ;; => {:pos-ls ((2 0) (1 0) (0 0) (0 1))}
   ;; => {:pos-ls ((0 0) (1 0) (2 0) (2 1))}
 
-  
+  (vals (group-by even? [1 2 3 4]))
+  ;; => ([1 3] [2 4])
+
+  (#{1 2 3} 1)
+  ;; => 1
+
   )
 

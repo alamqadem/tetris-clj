@@ -25,6 +25,14 @@
         pos-ls (shape/pos-ls (shape piece))]
     (map (fn [p] (pos/add p pos)) pos-ls)))
 
+(defn ->pos-ls-map [piece]
+  (let [shape-pos-ls (shape/pos-ls (shape piece))
+        pos-ls (->pos-ls piece)]
+    (zipmap pos-ls shape-pos-ls)))
+
+(zipmap [:a :b :c] [1 2 3])
+;; => {:a 1, :b 2, :c 3}
+
 ;; shape->board
 (defn ->board [piece init-board]
   (reduce (fn [board pos]
@@ -49,6 +57,16 @@
         new-pos (pos/add old-pos shift)]
     (make new-shape new-pos)))
 
+(defn remove-row
+  [piece row-index]
+  ;; here I need to change the shapes to remove certain rows
+  (let [shape-row (- row-index (pos/y (pos piece)))]
+    (shape-set! piece
+                (shape/remove-row (shape piece) shape-row))))
+
+(defn remove-rows
+  [piece full-rows]
+  (reduce remove-row piece full-rows))
 
 (comment
   (def p (make shape/l (pos/make 0 0)))
