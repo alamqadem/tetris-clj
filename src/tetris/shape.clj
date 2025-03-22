@@ -21,12 +21,15 @@
 
 (defn normalize
   "Returns a shape where all the positions in pos-ls have pos subtracted"
-  [shape pos]
-  (make
-   (->>
-    (pos-ls shape)
-    (map (fn [p] (pos/sub p pos)))
-    (sort pos/compare-pos))))
+  ([shape]
+   (let [min-pos (pos/min-pos (pos-ls shape))]
+     (normalize shape min-pos)))
+  ([shape pos]
+   (make
+    (->>
+     (pos-ls shape)
+     (map (fn [p] (pos/sub p pos)))
+     (sort pos/compare-pos)))))
 
 (defn flip
   "Returns the shape flipped by 90' anti-clockwise"
