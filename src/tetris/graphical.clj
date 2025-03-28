@@ -3,9 +3,15 @@
   (:require [clojure.string :as str]
             [tetris.position :as pos]))
 
+
 ;; graphical system
+(def EMPTY-SPACE "   ")
+(def BLOCK "[ ]")
+(def BORDER "---")
+(def POS-REGEX #"\s\s\s|\[\s\]")
+
 (defn row [n]
-  (into [] (repeat n "   ")))
+  (into [] (repeat n EMPTY-SPACE)))
 
 (defn make-matrix [n]
   (into []
@@ -34,7 +40,7 @@
   (let [size (size board)
         board-content (reduce #(str %1 "\n" %2)
                               (map #(apply str %1) (matrix board)))
-        board-border (apply str (repeat size "---"))]
+        board-border (apply str (repeat size BORDER))]
     (str board-border "\n"
          board-content "\n"
          board-border)))
@@ -43,7 +49,7 @@
   "create a board given its string representation as a list of lines"
   [board-str-lines]
   (let [board-lines-without-border (drop-last 1 (drop 1 board-str-lines))
-        lines-splitted (map (partial re-seq #"\s\s\s|\[\s\]")
+        lines-splitted (map (partial re-seq POS-REGEX)
                             board-lines-without-border)
         matrix (into [] (map (partial into []) lines-splitted))]
     (-make matrix (count matrix))))
@@ -70,7 +76,7 @@
             {:pos (list pos-x pos-y) :size (size board)})))
   (let [board-values (matrix board)
         board-row (get board-values pos-y)
-        updated-board-row (assoc board-row pos-x "[ ]")
+        updated-board-row (assoc board-row pos-x BLOCK)
         new-board-values  (assoc board-values pos-y updated-board-row)]
     (matrix-set! board new-board-values)))
 
@@ -82,7 +88,7 @@
   ([board pos]
    (has-block? board (pos/x pos) (pos/y pos)))
   ([board x y]
-   (= (get-block board x y) "[ ]")))
+   (= (get-block board x y) BLOCK)))
 
 (defn ->pos-ls
   "Returns the list of positions that have a block in the board"
