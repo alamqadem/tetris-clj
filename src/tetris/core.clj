@@ -4,6 +4,7 @@
             [tetris.position :as pos]
             [tetris.shape :as shape]
             [tetris.piece :as piece]
+            [tetris.movement :as movement]
             [tetris.game :as game]
             ))
 
@@ -15,14 +16,15 @@
       (let [input (read-line)]
         (if (not= input "q")
           (let [movement (case input
-                           "a" (pos/make -1 0)
-                           "d" (pos/make 1 0)
-                           (pos/make 0 0))
-                flip? (= input "s")]
+                           "a" movement/move-left
+                           "d" movement/move-right
+                           "s" movement/flip-move
+                           movement/no-movement)]
+
             (flush)
             (if (game/game-over? game)
               (println "game over...")
-              (recur (game/update-game game movement flip?))))
+              (recur (game/update-game game movement))))
           (println "quitting..."))))))
 
 (defn -main
@@ -131,7 +133,7 @@
   (def piece (first (game/pieces game)))
   (def new-pos (pos/add (piece/pos piece) (pos/make 0 1)))
 
-  (game/can-move? game piece new-pos)
+  (game/can-move? game piece movement/move-down)
   ;; => true
   (game/outside-of-boundaries? game piece new-pos)
   ;; => false

@@ -29,7 +29,7 @@
           (make (comp (move-fn movement2) (move-fn movement1))))]
     (reduce combine2 no-movement movements)))
 
-(defn make-movement-direction
+(defn make-from-direction
   [direction]
   (make
    (fn [piece]
@@ -37,15 +37,14 @@
       (piece/shape piece)
       (pos/add (piece/pos piece) direction)))))
 
-(def move-right (make-movement-direction (pos/make 1 0)))
+;; predefined movements
+(def move-right (make-from-direction (pos/make 1 0)))
 
-(def move-left (make-movement-direction (pos/make -1 0)))
+(def move-left (make-from-direction (pos/make -1 0)))
 
-(def move-down (make-movement-direction (pos/make 0 1)))
+(def move-down (make-from-direction (pos/make 0 1)))
 
 (def flip-move (make piece/flip))
-
-
 
 
 (comment

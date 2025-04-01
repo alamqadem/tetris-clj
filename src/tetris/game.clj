@@ -2,7 +2,8 @@
   (:require [tetris.graphical :as graphical]
             [tetris.position :as pos]
             [tetris.shape :as shape]
-            [tetris.piece :as piece]))
+            [tetris.piece :as piece]
+            [tetris.movement :as movement]))
 
 (defn make
   ([time pieces size]
@@ -63,9 +64,9 @@
                (cons piece (pieces game))))
 
 (defn ->board
-   "transforms a game into a board"
+  "transforms a game into a board"
   [game]
-   (let [pieces (pieces game)
+  (let [pieces (pieces game)
         board (graphical/make (size game))]
     (reduce (fn [board p] (piece/->board p board)) board pieces)))
 
@@ -111,36 +112,41 @@
 
 (defn outside-of-boundaries?
   "returns true if moving piece in the game to pos makes it outside of the game boundaries"
-  [game piece pos]
-  (let [pos-ls (piece/->pos-ls (piece/pos-set! piece pos))]
-    (some not (map (fn [p] (pos-in-game? game p)) pos-ls))))
+  ([game piece]
+   (outside-of-boundaries? game piece (piece/pos piece)))
+  ([game piece pos]
+   (let [pos-ls (piece/->pos-ls (piece/pos-set! piece pos))]
+     (some not (map (fn [p] (pos-in-game? game p)) pos-ls)))))
 
-(defn collision-with-other-piece? [game piece pos]
-  ;; returns true if piece moved to pos collides with another piece
-  (let [other-pieces-ls (other-pieces game piece)
-        piece-after-move (piece/pos-set! piece pos)]
-    (some (partial piece/collision? piece-after-move) other-pieces-ls)))
+(defn collision-with-other-piece?
+  "returns true if piece moved to pos collides with another piece"
+  ([game piece pos]
+   (let [other-pieces-ls (other-pieces game piece)
+         piece-after-move (piece/pos-set! piece pos)]
+     (collision-with-other-piece? piece-after-move other-pieces-ls)))
+  ([piece-after-move other-pieces-ls]
+   (some (partial piece/collision? piece-after-move) other-pieces-ls)))
 
 (defn can-move?
   "true if it can move a piece in game to pos, false otherwise"
   ([game movement]
-   (let [piece (current-piece game)
-         pos (pos/add (piece/pos piece) movement)]
-     (can-move? game piece pos)))
-  ([game piece pos]
-   (not (or
-         (outside-of-boundaries? game piece pos)
-         (collision-with-other-piece? game piece pos)))))
+   (let [piece (current-piece game)]
+     (can-move? game piece movement)))
+  ([game piece movement]
+   (let [other-pieces-ls (other-pieces game piece)
+         piece-after-move (movement/move piece movement)]
+     (not (or
+           (outside-of-boundaries? game piece-after-move)
+           (collision-with-other-piece? piece-after-move other-pieces-ls))))))
 
 (defn move-piece
   ([game movement]
-   (let [piece (current-piece game)
-         pos (pos/add (piece/pos piece) movement)]
-     (move-piece game piece pos)))
-  ([game piece new-pos]
-   (let [new-piece (piece/pos-set! piece new-pos)
-         pieces (other-pieces game piece)]
-     (add-piece (pieces-set! game pieces) new-piece))))
+   (let [piece (current-piece game)]
+     (move-piece game piece movement)))
+  ([game piece movement]
+   (let [piece-after-move (movement/move piece movement)
+         game-without-piece (pieces-set! game (other-pieces game piece))]
+     (add-piece game-without-piece piece-after-move))))
 
 (defn add-random-piece [game]
   ;;adds a new piece of a random shape at the top of the game in a random position
@@ -191,59 +197,39 @@
 
 (defn move-all-pieces-down
   [game]
-  (let [down-by-1 (pos/make 0 1)
-        can-move-piece?        (fn [game piece]
-                                 (let [new-pos (pos/add
-                                                (piece/pos piece)
-                                                down-by-1)]
-                                   (can-move? game piece new-pos)))
-        pieces-that-can-be-moved (filter (partial can-move-piece? game)
-                                         (pieces game))]
+  (let [can-move-piece? (fn [piece] (can-move? game piece movement/move-down))
+        pieces-that-can-be-moved (filter can-move-piece? (pieces game))
+        move-piece (fn [game piece] (move-piece game piece movement/move-down))]
     (if (empty? pieces-that-can-be-moved)
       game
-      (let [game-with-moved-pieces (reduce (fn [game piece]
-                                             (let [new-pos
-                                                   (pos/add
-                                                    (piece/pos piece)
-                                                    down-by-1)]
-                                               (move-piece game piece
-                                                           new-pos)))
-                                           game
-                                           pieces-that-can-be-moved)]
-        (recur game-with-moved-pieces)))))
+      (recur (reduce move-piece game pieces-that-can-be-moved)))))
 
 (defn game-over? [game]
   (let [piece (current-piece game)]
     (if (not piece)
       false
-      (let [pos (piece/pos piece)
-            new-pos (pos/add pos (pos/make 0 1))]
-        (and
-         (= (pos/y pos) 0)
-         (not (can-move? game piece new-pos)))))))
+      (and
+         (= (-> piece piece/pos pos/y) 0)
+         (not (can-move? game piece movement/move-down))))))
 
 (defn update-game
   ([game]
-   (update-game game (pos/make 0 0) false))
-  ([game movement flip?]
+   (update-game game movement/no-movement))
+  ([game movement]
    (let [game-updated (game-time-set! game (inc (game-time game)))
          piece (current-piece game-updated)]
      ;; increment time
      (if (not piece)
        (add-random-piece game-updated)
-       (let [down-by-1 (pos/make 0 1)
-             ;; applying flipping
-             game-updated (if flip?
-                            (flip-current-piece game-updated)
-                            game-updated)
-             ;; apply movement left/right
+       (let [move-down1 movement/move-down
+             ;; apply movement left/right/flip
              game-updated (if (can-move? game-updated movement)
                             (move-piece game-updated movement)
                             game-updated)]
          ;; move current piece down by 1 if present
          ;; if the current piece cannot move add a new random piece
-         (if (can-move? game-updated down-by-1)
-           (move-piece game-updated down-by-1)
+         (if (can-move? game-updated move-down1)
+           (move-piece game-updated move-down1)
            (let [full-rows-ls (full-rows game-updated)
                  game-updated (remove-full-rows game-updated full-rows-ls)
                  game-updated (move-all-pieces-down game-updated)]
@@ -525,7 +511,7 @@
   (collision-with-other-piece? game-test-collision sq-piece new-pos)
   ;; => nil
 
-  (can-move? game-test-collision sq-piece new-pos)
+  (can-move? game-test-collision sq-piece movement/move-down)
 
   (def updated-game (update-game game-test-collision))
 
@@ -591,7 +577,7 @@
   (pos/pos-ls-intersect? other-pieces-pos-ls piece-pos-ls-after-move)
   ;; => true
 
-  (can-move? (make 0 [] 5) (piece/make shape/l (pos/make 0 2)) (pos/make -1 1))
+  (can-move? (make 0 [] 5) (piece/make shape/l (pos/make 0 2)) (movement/make-from-direction (pos/make -1 1)))
    ;; {:pos (-1 1), :size 10}
 
   (def board
@@ -1062,8 +1048,7 @@
   (def down-by-1 (pos/make 0 1))
   (def can-move-piece?
     (fn [piece]
-      (let [new-pos (pos/add (piece/pos piece) down-by-1)]
-        (can-move? game-without-full-rows piece new-pos))))
+      (can-move? game-without-full-rows piece movement/move-down)))
 
   (def piece-that-can-be-moved (first (pieces game-without-full-rows)))
   piece-that-can-be-moved
