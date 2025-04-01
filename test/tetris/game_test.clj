@@ -4,6 +4,7 @@
             [tetris.position :as pos]
             [tetris.shape :as shape]
             [tetris.piece :as piece]
+            [tetris.movement :as movement]
             [tetris.graphical :as graphical]))
 
 (deftest test-game-operations
@@ -36,12 +37,11 @@
           ;;      ["[ ]" "   " "   " "   " "   "]
           ;;      ["[ ]" "[ ]" "   " "   " "   "]],
           ;;     :size 5}
-          current-piece (current-piece game)
-          new-pos (pos/make 0 3)]
-      (is (outside-of-boundaries? game current-piece new-pos))
-      (is (not (outside-of-boundaries? game current-piece (piece/pos current-piece))))
-      (is (outside-of-boundaries? game current-piece (pos/make -1 1)))))
-
+          current-piece (current-piece game)]
+      (is (outside-of-boundaries? game (movement/move current-piece movement/move-down)))
+      (is (not (outside-of-boundaries? game current-piece)))
+      (is (outside-of-boundaries? game (movement/move current-piece
+                                                      (movement/make-from-direction (pos/make -1 1)))))))
 
   (testing "collision detection of pieces"
     (let [game-test-collision

@@ -23,6 +23,11 @@
 (defn size [game]
   (get game :size))
 
+(defn bottom-right-pos
+  [game]
+  (let [s (dec (size game))]
+    (pos/make s s)))
+
 (defn points [game]
   (:points game))
 
@@ -60,8 +65,7 @@
 (defn add-piece
   "adds a piece in such a way that the new piece is the current piece"
   [game piece]
-  (pieces-set! game
-               (cons piece (pieces game))))
+  (pieces-set! game (cons piece (pieces game))))
 
 (defn ->board
   "transforms a game into a board"
@@ -112,11 +116,11 @@
 
 (defn outside-of-boundaries?
   "returns true if moving piece in the game to pos makes it outside of the game boundaries"
-  ([game piece]
-   (outside-of-boundaries? game piece (piece/pos piece)))
   ([game piece pos]
-   (let [pos-ls (piece/->pos-ls (piece/pos-set! piece pos))]
-     (some not (map (fn [p] (pos-in-game? game p)) pos-ls)))))
+   (let [piece-after-move (piece/pos-set! piece pos)]
+     (outside-of-boundaries? game piece-after-move)))
+  ([game piece]
+   (not (piece/within-boundaries? piece (bottom-right-pos game)))))
 
 (defn collision-with-other-piece?
   "returns true if piece moved to pos collides with another piece"
@@ -155,21 +159,6 @@
         rand-pos (pos/rand-pos (- (size game) (dec rand-shape-width)))
         rand-piece (piece/make rand-shape rand-pos)]
     (add-piece game rand-piece)))
-
-(defn can-flip?
-  [game flipped-piece]
-  ;; take the current piece out, flip it and see if it can be moved there
-  (can-move? game flipped-piece (piece/pos flipped-piece)))
-
-(defn flip-current-piece
-  "Flips the current piece and updates the game"
-  [game]
-  (let [piece (current-piece game)
-        flipped-piece (piece/flip piece)
-        game-without-current (pieces-set! game (rest-pieces game))]
-    (if (can-flip? game-without-current flipped-piece)
-      (add-piece game-without-current flipped-piece)
-      game)))
 
 (defn row-is-full?
   "Checks if the given row index is full"
@@ -246,9 +235,9 @@
   (pos-in-game? (make 0 [] 10) (pos/make 1 1))
   ;; => true
 
-  (outside-of-boundaries? (make 0 [] 10) (piece/make shape/l (pos/make 0 0)) (pos/make 1 1))
+  (outside-of-boundaries? (make 0 [] 10) (piece/make shape/l (pos/make 1 1)))
   ;; => false
-  (outside-of-boundaries? (make 0 [] 10) (piece/make shape/l (pos/make 0 0)) (pos/make 1 10))
+  (outside-of-boundaries? (make 0 [] 10) (piece/make shape/l (pos/make 1 10)))
   ;; => true
   (pos/in-pos-ls? (pos/make 0 1) [(pos/make 1 1) (pos/make 2 1) (pos/make 0 1)])
   ;; => true
@@ -852,6 +841,21 @@
         shift (pos/make width-diff height-diff)
         new-pos (pos/add old-pos shift)]
     new-pos)
+
+  (defn can-flip?
+    [game flipped-piece]
+  ;; take the current piece out, flip it and see if it can be moved there
+    (can-move? game flipped-piece (piece/pos flipped-piece)))
+
+  (defn flip-current-piece
+    "Flips the current piece and updates the game"
+    [game]
+    (let [piece (current-piece game)
+          flipped-piece (piece/flip piece)
+          game-without-current (pieces-set! game (rest-pieces game))]
+      (if (can-flip? game-without-current flipped-piece)
+        (add-piece game-without-current flipped-piece)
+        game)))
 
   (def game-without-current (pieces-set! game (rest (pieces game))))
   (can-flip? game-without-current flipped-piece)

@@ -53,6 +53,17 @@
     (+ (* (- (x pos1) (x pos2)) factor)
        (- (y pos1) (y pos2)))))
 
+(defn within-boundaries?
+  "Return true if the position is in the area delimeted by max-pos"
+  ([pos bottom-right-pos]
+   (within-boundaries? pos (make 0 0) bottom-right-pos))
+  ([pos top-left-pos bottom-right-pos]
+   (and
+    (>= (x pos) (x top-left-pos))
+    (>= (y pos) (y top-left-pos))
+    (<= (x pos) (x bottom-right-pos))
+    (<= (y pos) (y bottom-right-pos)))))
+
 (defn flip
   "Returns a position with the coordinates x and y flipped"
   [pos]
@@ -131,7 +142,6 @@
   (find-contiguous-group pos-ls)
   ;; => (((3 0) (2 1) (2 0) (1 0)) ((4 4) (4 3) (4 2) (3 4)))
 
-
   (def groups
     (find-contiguous pos-ls))
 
@@ -154,5 +164,12 @@
   (every? true? (map = [1 2 3] [1 3 3]))
   ;; => false
 
+  (within-boundaries? (make 0 0) (make 1 1))
+  ;; => true
 
+  (within-boundaries? (make 0 0) (make 1 1) (make 2 2))
+  ;; => false
+
+  (within-boundaries? (make 2 2) (make 2 2))
+  ;; => true
   )

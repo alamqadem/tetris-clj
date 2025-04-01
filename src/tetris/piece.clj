@@ -30,9 +30,6 @@
         pos-ls (->pos-ls piece)]
     (zipmap pos-ls shape-pos-ls)))
 
-(zipmap [:a :b :c] [1 2 3])
-;; => {:a 1, :b 2, :c 3}
-
 ;; shape->board
 (defn ->board [piece init-board]
   (reduce (fn [board pos]
@@ -41,6 +38,12 @@
                                  (pos/y pos)))
           init-board
           (->pos-ls piece)))
+
+(defn within-boundaries?
+  "Return true if all the positions of the piece are within the area delimed by max-pos"
+  [piece bottom-right-pos]
+  (let [pos-ls (->pos-ls piece)]
+     (every? #(pos/within-boundaries? %1 bottom-right-pos) pos-ls)))
 
 (defn collision?
   "Checks if 2 pieces collide"
@@ -100,4 +103,10 @@
   ;; => Syntax error compiling at (src/tetris/piece.clj:50:3).
   ;;    Unable to resolve symbol: p in this context
   ;; => {:shape {:pos-ls ((0 0) (1 0) (2 0) (2 1))}, :pos (0 0)}
+
+  (within-boundaries? (make shape/l (pos/make 0 0)) (pos/make 3 3))
+  ;; => true
+
+  (within-boundaries? (make shape/l (pos/make 0 2)) (pos/make 3 3))
+  ;; => false
   )
