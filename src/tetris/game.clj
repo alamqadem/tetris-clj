@@ -67,6 +67,10 @@
   [game piece]
   (pieces-set! game (cons piece (pieces game))))
 
+(defn increment-time
+  [game]
+  (game-time-set! game (inc (game-time game))))
+
 (defn ->board
   "transforms a game into a board"
   [game]
@@ -186,33 +190,42 @@
 
 (defn game-over? [game]
   (if (empty? (pieces game))
-      false
-      (and
-         (= (-> (current-piece game) piece/pos pos/y) 0)
-         (not (can-move? game movement/move-down)))))
+    false
+    (and
+     (= (-> (current-piece game) piece/pos pos/y) 0)
+     (not (can-move? game movement/move-down)))))
+
+(defn handle-full-rows
+  [game]
+  (->> game
+       full-rows
+       (remove-full-rows game)
+       move-all-pieces-down))
+
+(defn move-if-possible-or
+  ([game movement else-fn]
+   (if (can-move? game movement)
+     (move-piece game movement)
+     (else-fn game))))
+
+(defn move-if-possible
+  ([game movement]
+   (move-if-possible-or game movement identity)))
 
 (defn update-game
   ([game]
    (update-game game movement/no-movement))
   ([game movement]
-   (let [game-updated (game-time-set! game (inc (game-time game)))
-         piece (current-piece game-updated)]
-     ;; increment time
-     (if (not piece)
+   (let [game-updated (increment-time game)]
+     (if (empty? (pieces game-updated))
        (add-random-piece game-updated)
-       (let [move-down1 movement/move-down
-             ;; apply movement left/right/flip
-             game-updated (if (can-move? game-updated movement)
-                            (move-piece game-updated movement)
-                            game-updated)]
-         ;; move current piece down by 1 if present
-         ;; if the current piece cannot move add a new random piece
-         (if (can-move? game-updated move-down1)
-           (move-piece game-updated move-down1)
-           (let [full-rows-ls (full-rows game-updated)
-                 game-updated (remove-full-rows game-updated full-rows-ls)
-                 game-updated (move-all-pieces-down game-updated)]
-             (add-random-piece game-updated))))))))
+       (->
+        game-updated
+        (move-if-possible movement)
+        (move-if-possible-or movement/move-down
+                             (fn [game] (-> game
+                                            handle-full-rows
+                                            add-random-piece))))))))
 
 (comment
   {:time 0,
@@ -222,7 +235,7 @@
   (make 0 [] 10)
   ;; => {:time 0, :pieces [], :size 10}
 
-  (pos-in-game? (make 0 [] 10) (pos/make 1 1))
+  (pos/within-boundaries? (pos/make 1 1) (pos/make 10 10))
   ;; => true
 
   (outside-of-boundaries? (make 0 [] 10) (piece/make shape/l (pos/make 1 1)))
@@ -295,18 +308,18 @@
     (make 0 [] 10))
 
   (->board empty-game)
-     ;; => {:board
-     ;;     [["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
-     ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
-     ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
-     ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
-     ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
-     ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
-     ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
-     ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
-     ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
-     ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]],
-     ;;     :size 10}
+  ;; => {:board
+  ;;     [["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]],
+  ;;     :size 10}
 
   (->board (add-random-piece empty-game))
   ;; => {:board
@@ -322,7 +335,7 @@
   ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]],
   ;;     :size 10}
 
-  ; let's see what happens if I take a vector and do conj on it
+  ;; let's see what happens if I take a vector and do conj on it
   (def first-conj (conj [] 1))
   ;; => [1]
   (last first-conj)
@@ -557,7 +570,7 @@
   ;; => true
 
   (can-move? (make 0 [] 5) (piece/make shape/l (pos/make 0 2)) (movement/make-from-direction (pos/make -1 1)))
-   ;; {:pos (-1 1), :size 10}
+  ;; {:pos (-1 1), :size 10}
 
   (def board
     (graphical/-make
@@ -695,16 +708,16 @@
   (def flipped-piece {:shape {:pos-ls '((0 0) (0 1) (0 2) (0 3))}, :pos '(6 0)})
 
   (shape/height (piece/shape piece))
-;; => 1
+  ;; => 1
 
   (shape/height (piece/shape flipped-piece))
-;; => 4
+  ;; => 4
 
   (shape/width (piece/shape piece))
-;; => 4
+  ;; => 4
 
   (shape/width (piece/shape flipped-piece))
-;; => 1
+  ;; => 1
 
   (def game-flipped (flip-current-piece game))
   game-flipped
@@ -834,7 +847,7 @@
 
   (defn can-flip?
     [game flipped-piece]
-  ;; take the current piece out, flip it and see if it can be moved there
+    ;; take the current piece out, flip it and see if it can be moved there
     (can-move? game flipped-piece (piece/pos flipped-piece)))
 
   (defn flip-current-piece
@@ -1081,5 +1094,5 @@
 
   ;; we will need to keep doing this until there are no pieces to move
 
-;; separator :P
+  ;; separator :P
   )
