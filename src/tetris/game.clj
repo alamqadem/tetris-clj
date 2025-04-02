@@ -185,12 +185,11 @@
       (recur (reduce move-piece game pieces-that-can-be-moved)))))
 
 (defn game-over? [game]
-  (let [piece (current-piece game)]
-    (if (not piece)
+  (if (empty? (pieces game))
       false
       (and
-         (= (-> piece piece/pos pos/y) 0)
-         (not (can-move? game piece movement/move-down))))))
+         (= (-> (current-piece game) piece/pos pos/y) 0)
+         (not (can-move? game movement/move-down)))))
 
 (defn update-game
   ([game]
