@@ -105,15 +105,6 @@
         pieces (map piece/make norm-shapes pos-ls)]
     (make 0 pieces (graphical/size board))))
 
-(defn pos-in-game?
-  "returns true if a position is within a game matrix"
-  [game pos]
-  (and
-   (>= (pos/x pos) 0)
-   (>= (pos/y pos) 0)
-   (< (pos/x pos) (size game))
-   (< (pos/y pos) (size game))))
-
 (defn outside-of-boundaries?
   "returns true if moving piece in the game to pos makes it outside of the game boundaries"
   ([game piece pos]

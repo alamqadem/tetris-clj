@@ -141,7 +141,7 @@
         (piece/->pos-ls (piece/pos-set! piece new-pos))
           ;; => ((0 9) (0 10) (1 9) (2 9))
         ]
-    (some not (map (fn [p] (game/pos-in-game? game p)) pos-ls)))
+    (some not (map (fn [p] (pos/within-boundaries? p (pos/make (game/size game) (game/size game)))) pos-ls)))
 
   (def invalid-game
     (game/pieces-set! game
