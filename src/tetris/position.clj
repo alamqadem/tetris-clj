@@ -41,6 +41,13 @@
     (apply min (map x pos-ls))
     (apply min (map y pos-ls)))))
 
+(defn max-pos
+  "Returns the minimum position calculate by combining the min x and the min y"
+  ([pos-ls]
+   (make
+    (apply max (map x pos-ls))
+    (apply max (map y pos-ls)))))
+
 (defn abs-pos
   "Returns the absolute value applied on the coordinates"
   [pos]
@@ -63,6 +70,13 @@
     (>= (y pos) (y top-left-pos))
     (<= (x pos) (x bottom-right-pos))
     (<= (y pos) (y bottom-right-pos)))))
+
+(defn adjust-to-within-boundaries
+  ([pos top-left]
+   (max-pos (list pos top-left)))
+  ([pos top-left bottom-right]
+   (let [pos-top-adjusted (adjust-to-within-boundaries pos top-left)]
+     (min-pos (list pos-top-adjusted bottom-right)))))
 
 (defn flip
   "Returns a position with the coordinates x and y flipped"
@@ -172,4 +186,19 @@
 
   (within-boundaries? (make 2 2) (make 2 2))
   ;; => true
+
+  (def pos (make -1 6))
+
+  (def top-left (make 0 0))
+
+  (def bottom-right (make 5 5))
+
+  (max-pos (list pos top-left))
+  ;; => (0 6)
+
+  (min-pos (list (max-pos (list pos top-left)) bottom-right))
+  ;; => (0 5)
+
+  (adjust-to-within-boundaries pos top-left bottom-right)
+  ;; => (0 5)
   )

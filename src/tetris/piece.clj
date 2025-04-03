@@ -57,8 +57,10 @@
         new-shape (shape/flip (shape piece))
         old-pos (pos piece)
         shift (shape/shift old-shape new-shape)
-        new-pos (pos/add old-pos shift)]
-    (make new-shape new-pos)))
+        new-pos (pos/add old-pos shift)
+        min-pos (pos/make 0 0)
+        new-pos-adjusted (pos/adjust-to-within-boundaries new-pos min-pos)]
+    (make new-shape new-pos-adjusted)))
 
 (defn remove-row
   [piece row-index]

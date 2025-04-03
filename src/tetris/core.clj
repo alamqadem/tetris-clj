@@ -35,7 +35,7 @@
   (let [parse-arg-or (fn [arg default]
                        (if arg (Integer/parseInt arg) default))
         width (parse-arg-or (first args) 10)
-        height (parse-arg-or (first args) 20)]
+        height (parse-arg-or (second args) 20)]
     (game-loop width height)))
 
 (comment

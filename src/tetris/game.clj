@@ -127,7 +127,7 @@
         shapes (map shape/make groups)
         norm-shapes (map shape/normalize shapes pos-ls)
         pieces (map piece/make norm-shapes pos-ls)]
-    (make 0 pieces (graphical/width board) (graphical/height board))))
+    (make 0 pieces (graphical/width board) (graphical/height board) 0)))
 
 (defn outside-of-boundaries?
   "returns true if moving piece in the game to pos makes it outside of the game boundaries"
@@ -1112,6 +1112,228 @@
   ;;---------------
 
   ;; we will need to keep doing this until there are no pieces to move
+
+  (def board (graphical/from-str-ls ["------------------------------"
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "   [ ]                        "
+                                     "[ ][ ]                        "
+                                     "[ ]                           "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "------------------------------"]))
+
+  board
+  ;; => {:board
+  ;;     [["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "[ ]" "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["[ ]" "[ ]" "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["[ ]" "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]],
+  ;;     :size (10 20)}
+
+  ;; I am trying to allow always moving a piece, but in this configuration I see I cannot flip it, why is that?
+  (def game (->game board))
+
+  game
+  ;; => {:time 0,
+  ;;     :pieces
+  ;;     ({:shape {:pos-ls ((0 0))}, :pos (1 7)}
+  ;;      {:shape {:pos-ls ((0 0) (0 1) (1 0))}, :pos (0 8)}),
+  ;;     :size (10 20),
+  ;;     :points 0}
+  ;; after fixing it
+  ;; => {:time 0,
+  ;;     :pieces ({:shape {:pos-ls ((0 1) (1 0) (0 2) (1 1))}, :pos (0 7)}),
+  ;;     :size (10 20),
+  ;;     :points 0}
+  
+  (def pos-ls (graphical/->pos-ls board))
+  pos-ls
+  ;; => ((0 8) (0 9) (1 7) (1 8))
+  (def groups (pos/find-contiguous pos-ls))
+  groups
+  ;; => ([(1 7)] ((1 8) (0 9) (0 8)))
+
+  ;; found a bug in grouping, apparently one pass over the list is not enough, because depending on the order some lements may be left outx
+  (pos/contiguos-to-ls? (first (first groups)) (second groups))
+  ;; true
+  
+  (pos/find-contiguous-group (first pos-ls) (rest pos-ls))
+  ;; => (((1 7) (1 8) (0 9) (0 8)) [])
+  ;; after fixing it, I now getting the right result
+  ;; => (((1 8) (0 9) (0 8)) ((1 7)))
+
+  (pos/find-contiguous-group pos-ls)
+  ;; => (((1 8) (0 9) (0 8)) ((1 7)))
+
+  (sort pos/compare-pos pos-ls)
+  ;; => ((0 8) (0 9) (1 7) (1 8))
+  (pos/find-contiguous-group (sort pos/compare-pos pos-ls))
+  ;; => (((1 8) (0 9) (0 8)) ((1 7)))
+
+  (pos/find-contiguous-group '((1 8) (0 9) (0 8)) [] '((1 7)))
+  ;; => (((1 7) (1 8) (0 9) (0 8)) [])
+
+  (def game (pieces-set! game [(piece/make
+                                (shape/make [(pos/make 0 1) (pos/make 1 0) (pos/make 1 1) (pos/make 0 2)])
+                                (pos/make 0 8))]))
+
+  (print-game game)
+
+  (def piece (current-piece game))
+  piece
+  ;; => {:shape {:pos-ls [(0 1) (1 0) (1 1) (0 2)]}, :pos (0 8)}
+
+  (piece/flip piece)
+  ;; => {:shape {:pos-ls ((1 0) (2 1) (1 1) (0 0))}, :pos (-1 9)}
+
+  (def piece (current-piece game))
+  piece
+  ;; => {:shape {:pos-ls ((0 0))}, :pos (1 7)}
+
+  (def old-shape (piece/shape piece))
+  old-shape
+  ;; => {:pos-ls [(0 1) (1 0) (1 1) (0 2)]}
+  (def new-shape (shape/flip (piece/shape piece)))
+  new-shape
+  ;; => {:pos-ls ((1 0) (2 1) (1 1) (0 0))}
+  (def old-pos (piece/pos piece))
+  old-pos
+  ;; => (0 8)
+  (def shift (shape/shift old-shape new-shape))
+  shift
+  ;; => (-1 1)
+  (def new-pos (pos/add old-pos shift))
+  new-pos
+  ;; => (-1 9)
+  (def min-pos (pos/make 0 0))
+  min-pos
+  ;; => (0 0)
+  (def new-pos-adjusted (pos/adjust-to-within-boundaries new-pos min-pos))
+  new-pos-adjusted
+  ;; => (0 9)
+
+  (piece/flip piece)
+  ;; => {:shape {:pos-ls ((1 0) (2 1) (1 1) (0 0))}, :pos (0 9)}
+
+  (def board (graphical/from-str-ls ["------------------------------"
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "   [ ]                        "
+                                     "   [ ]                        "
+                                     "[ ][ ]                        "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "                              "
+                                     "------------------------------"]))
+
+  board
+  ;; => {:board
+  ;;     [["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "[ ]" "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "[ ]" "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["[ ]" "[ ]" "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]
+  ;;      ["   " "   " "   " "   " "   " "   " "   " "   " "   " "   "]],
+  ;;     :size (10 20)}
+
+  (def game (->game board))
+
+  game
+  ;; => {:time 0,
+  ;;     :pieces
+  ;;     ({:shape {:pos-ls ((0 0) (0 1))}, :pos (1 10)}
+  ;;      {:shape {:pos-ls ((0 0) (1 0))}, :pos (0 12)}),
+  ;;     :size (10 20),
+  ;;     :points 0}
+  (def game (pieces-set! game [(piece/make shape/j (pos/make 0 10))]))
+  game
+  ;; => {:time 0,
+  ;;     :pieces ({:shape {:pos-ls [(1 0) (1 1) (0 2) (1 2)]}, :pos (0 10)}),
+  ;;     :size (10 20),
+  ;;     :points 0}
+  (print-game game)
+
+  (def piece (current-piece game))
+  piece
+  ;; => {:shape {:pos-ls [(1 0) (1 1) (0 2) (1 2)]}, :pos (0 10)}
+
+  (piece/flip piece)
+  ;; => {:shape {:pos-ls ((2 1) (1 1) (0 0) (0 1))}, :pos (0 11)}
+
+  (outside-of-boundaries? game (piece/flip piece))
+  ;; => false
+
+  (can-move? game piece movement/flip-move)
+  ;; => false
+
+  ;; expanding can-move?
+
+  (def movement movement/flip-move)
+  (def other-pieces-ls (other-pieces game piece))
+  other-pieces-ls
+  ;; => ()
+  (def piece-after-move (movement/move piece movement))
+  piece-after-move
+  ;; => {:shape {:pos-ls ((2 1) (1 1) (0 0) (0 1))}, :pos (-1 11)}
+  (def piece-after-move (movement/move piece (movement/make piece/flip)))
+  piece-after-move
+  ;; => {:shape {:pos-ls ((2 1) (1 1) (0 0) (0 1))}, :pos (0 11)}
 
   ;; separator :P
   )
