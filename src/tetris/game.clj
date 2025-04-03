@@ -189,11 +189,10 @@
       (recur (reduce move-piece game pieces-that-can-be-moved)))))
 
 (defn game-over? [game]
-  (if (empty? (pieces game))
-    false
-    (and
+  (and
+     (not-empty (pieces game))
      (= (-> (current-piece game) piece/pos pos/y) 0)
-     (not (can-move? game movement/move-down)))))
+     (not (can-move? game movement/move-down))))
 
 (defn handle-full-rows
   [game]
