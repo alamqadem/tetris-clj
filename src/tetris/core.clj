@@ -9,30 +9,34 @@
             ))
 
 ;; loop
-(defn game-loop [board-size]
-  (let [empty-game (game/make 0 [] board-size)]
-    (loop [game empty-game]
-      (game/print-game game)
-      (let [input (read-line)]
-        (if (not= input "q")
-          (let [movement (case input
-                           "a" movement/move-left
-                           "d" movement/move-right
-                           "s" movement/flip-move
-                           movement/no-movement)]
+(defn game-loop
+  ([size]
+   (game-loop size size))
+  ([width height]
+   (let [empty-game (game/make 0 [] width height 0)]
+     (loop [game empty-game]
+       (game/print-game game)
+       (let [input (read-line)]
+         (if (not= input "q")
+           (let [movement (case input
+                            "a" movement/move-left
+                            "d" movement/move-right
+                            "s" movement/flip-move
+                            movement/no-movement)]
 
-            (flush)
-            (if (game/game-over? game)
-              (println "game over...")
-              (recur (game/update-game game movement))))
-          (println "quitting..."))))))
+             (flush)
+             (if (game/game-over? game)
+               (println "game over...")
+               (recur (game/update-game game movement))))
+           (println "quitting...")))))))
 
 (defn -main
   [& args]
-  (let [size (if (empty? args)
-               20
-               (Integer/parseInt (first args)))]
-    (game-loop size)))
+  (let [parse-arg-or (fn [arg default]
+                       (if arg (Integer/parseInt arg) default))
+        width (parse-arg-or (first args) 10)
+        height (parse-arg-or (first args) 20)]
+    (game-loop width height)))
 
 (comment
   (game-loop 5)
@@ -88,7 +92,7 @@
   ;;     :size 5}
   (graphical/print-board board-with-a-piece)
 
-;; trying to reproduce a bug
+  ;; trying to reproduce a bug
   ;;   ------------------------------
   ;;                              
   ;;                              
@@ -139,7 +143,7 @@
   ;; => false
   (let [pos-ls
         (piece/->pos-ls (piece/pos-set! piece new-pos))
-          ;; => ((0 9) (0 10) (1 9) (2 9))
+        ;; => ((0 9) (0 10) (1 9) (2 9))
         ]
     (some not (map (fn [p] (pos/within-boundaries? p (pos/make (game/size game) (game/size game)))) pos-ls)))
 

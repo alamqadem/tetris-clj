@@ -7,11 +7,13 @@
 
 (defn make
   ([time pieces size]
-   (make time pieces size 0))
+   (make time pieces size size 0))
   ([time pieces size points]
+   (make time pieces size size points))
+  ([time pieces width height points]
    {:time time,
     :pieces (seq pieces),
-    :size size
+    :size (list width height)
     :points points}))
 
 (defn game-time [game]
@@ -23,10 +25,17 @@
 (defn size [game]
   (get game :size))
 
+(defn width [game]
+  (first (size game)))
+
+(defn height [game]
+  (second (size game)))
+
 (defn bottom-right-pos
   [game]
-  (let [s (dec (size game))]
-    (pos/make s s)))
+  (let [x (dec (width game))
+        y (dec (height game))]
+    (pos/make x y)))
 
 (defn points [game]
   (:points game))
@@ -35,17 +44,27 @@
   (make
    time
    (pieces game)
-   (size game)
+   (width game)
+   (height game)
    (points game)))
 
 (defn pieces-set! [game pieces]
-  (make (game-time game) pieces (size game) (points game)))
+  (make (game-time game) pieces (width game) (height game) (points game)))
 
-(defn size-set! [game size]
+(defn size-set!
+  [game size]
   (make (game-time game) (pieces game) size (points game)))
 
+(defn width-set!
+  [game width]
+  (make (game-time game) (pieces game) width (height game) (points game)))
+
+(defn height-set!
+  [game width]
+  (make (game-time game) (pieces game) (width game) height (points game)))
+
 (defn points-set! [game points]
-  (make (game-time game) (pieces game) (size game) points))
+  (make (game-time game) (pieces game) (width game) (height game) points))
 
 (defn current-piece
   "given a game returns the current piece that is failling"
@@ -75,7 +94,7 @@
   "transforms a game into a board"
   [game]
   (let [pieces (pieces game)
-        board (graphical/make (size game))]
+        board (graphical/make (width game) (height game))]
     (reduce (fn [board p] (piece/->board p board)) board pieces)))
 
 (defn to-str
@@ -88,7 +107,8 @@
   [game]
   (let [game-info (str (game-time game))
         status-length (count game-info)
-        spaces (apply str (repeat (- (* (size game) 3) status-length) " "))
+        game-char-width (* (width game) (count graphical/BLOCK))
+        spaces (apply str (repeat (- game-char-width status-length) " "))
         status-bar (str spaces game-info)]
     status-bar))
 
@@ -107,7 +127,7 @@
         shapes (map shape/make groups)
         norm-shapes (map shape/normalize shapes pos-ls)
         pieces (map piece/make norm-shapes pos-ls)]
-    (make 0 pieces (graphical/size board))))
+    (make 0 pieces (graphical/width board) (graphical/height board))))
 
 (defn outside-of-boundaries?
   "returns true if moving piece in the game to pos makes it outside of the game boundaries"
@@ -151,7 +171,7 @@
   ;;adds a new piece of a random shape at the top of the game in a random position
   (let [rand-shape (shape/random-shape)
         rand-shape-width (shape/width rand-shape)
-        rand-pos (pos/rand-pos (- (size game) (dec rand-shape-width)))
+        rand-pos (pos/rand-pos (- (width game) (dec rand-shape-width)))
         rand-piece (piece/make rand-shape rand-pos)]
     (add-piece game rand-piece)))
 
@@ -161,12 +181,12 @@
   (let [pieces-ls (pieces game)
         all-pos-ls (mapcat piece/->pos-ls pieces-ls)
         pos-ls-in-row (filter (fn [p] (= (pos/y p) row-index)) all-pos-ls)]
-    (= (count pos-ls-in-row) (size game))))
+    (= (count pos-ls-in-row) (width game))))
 
 (defn full-rows
   "Returns a list of all the row indexes that are full"
   [game]
-  (filter (partial row-is-full? game) (range 0 (size game))))
+  (filter (partial row-is-full? game) (range 0 (height game))))
 
 (defn remove-full-rows
   "Returns a game with all the full-rows removed"

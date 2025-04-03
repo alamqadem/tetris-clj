@@ -13,16 +13,26 @@
 (defn row [n]
   (into [] (repeat n EMPTY-SPACE)))
 
-(defn make-matrix [n]
-  (into []
-        (repeat n
-                (row n))))
+(defn make-matrix
+  ([n]
+   (make-matrix n n))
+  ([width height]
+   (into []
+         (repeat height
+                 (row width)))))
 
-(defn -make [matrix size]
-      {:board matrix, :size size})
+(defn -make
+  ([matrix width height]
+   (-make matrix (list width height)))
+  ([matrix size]
+   {:board matrix,
+    :size size}))
 
-(defn make [n]
-      (-make (make-matrix n) n))
+(defn make
+  ([n]
+   (make n n))
+  ([width height]
+   (-make (make-matrix width height) width height)))
 
 (defn matrix [board]
       (board :board))
@@ -30,14 +40,23 @@
 (defn size [board]
       (get board :size))
 
-(defn size-set! [board size]
-      (-make (matrix board) size))
+(defn width [board]
+  (first (size board)))
+
+(defn height [board]
+  (second (size board)))
+
+(defn size-set!
+  ([board width height]
+   (size-set! board (list width height)))
+  ([board size]
+   (-make (matrix board) size)))
 
 (defn matrix-set! [board board-values]
       (-make board-values (size board)))
 
 (defn to-str [board]
-  (let [size (size board)
+  (let [size (width board)
         board-content (reduce #(str %1 "\n" %2)
                               (map #(apply str %1) (matrix board)))
         board-border (apply str (repeat size BORDER))]
@@ -51,8 +70,10 @@
   (let [board-lines-without-border (drop-last 1 (drop 1 board-str-lines))
         lines-splitted (map (partial re-seq POS-REGEX)
                             board-lines-without-border)
-        matrix (into [] (map (partial into []) lines-splitted))]
-    (-make matrix (count matrix))))
+        matrix (into [] (map (partial into []) lines-splitted))
+        width (count (get matrix 0))
+        height (count matrix)]
+    (-make matrix width height)))
 
 (defn from-str
   "create a board given its string representation"
@@ -65,9 +86,9 @@
 (defn pos-in-board? [pos-x pos-y board]
   (and
    (>= pos-x 0)
-   (< pos-x (size board))
+   (< pos-x (width board))
    (>= pos-y 0)
-   (< pos-y (size board))))
+   (< pos-y (height board))))
 
 (defn add-block [board pos-x pos-y]
   (if (not (pos-in-board? pos-x pos-y board))
@@ -93,21 +114,19 @@
 (defn ->pos-ls
   "Returns the list of positions that have a block in the board"
   [board]
-  (let [size-range (range (size board))
-        pos-ls (for [x size-range, y size-range] (pos/make x y))
+  (let [pos-ls (for [x (range (width board)), y (range (height board))] (pos/make x y))
         board-has-block? (partial has-block? board)]
     (filter board-has-block? pos-ls)))
 
 (defn add-rand-block [board]
-  (add-block board (rand-int (size board)) 0))
+  (add-block board (rand-int (width board)) 0))
 
 (defn move-board [board]
-  (let [size (size board)
-        board-values (matrix board)
+  (let [board-values (matrix board)
         new-board-values
         (into []
-              (concat [(row size)]
-                      (take (- size 1) board-values)))]
+              (concat [(row (width board))]
+                      (take (- (height board) 1) board-values)))]
     (matrix-set! board new-board-values)))
 
 (comment
