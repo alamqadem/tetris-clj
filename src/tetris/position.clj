@@ -112,7 +112,9 @@
    (find-contiguous-group [(first pos-ls)] [] (rest pos-ls)))
   ([continguos-ls rest-ls pos-ls]
    (if (empty? pos-ls)
-     (list continguos-ls rest-ls)
+     (if (every? #(not (contiguos-to-ls? %1 continguos-ls)) rest-ls)
+       (list continguos-ls rest-ls)
+       (find-contiguous-group continguos-ls [] rest-ls))
      (let [p (first pos-ls)
            rest-pos-ls (rest pos-ls)]
        (if (contiguos-to-ls? p continguos-ls)
